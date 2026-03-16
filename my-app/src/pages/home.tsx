@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useDeferredValue, useEffect, useRef, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,25 +11,60 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import {
-  mockMaterials,
   mockRequesters,
+  type Material,
   type InventoryRequestLine,
   type SubmitPayload,
 } from "@/lib/inventory"
+import { loadMaterials } from "@/lib/materials"
 import { toast } from "sonner"
 
 export default function HomePage() {
+  const materialListViewportHeight = 288
+  const materialListRowHeight = 88
+  const materialListItemHeight = 80
+  const materialListOverscan = 6
   const companyLogoUrl = "https://onetrac.prophitmgmt.com:8443/pml/resources/spaar_small.png"
   const [selectedRequesterId, setSelectedRequesterId] = useState("")
   const [requesterSearch, setRequesterSearch] = useState("")
+  const [materials, setMaterials] = useState<Material[]>([])
+  const [isLoadingMaterials, setIsLoadingMaterials] = useState(true)
+  const [materialsError, setMaterialsError] = useState("")
   const [selectedMaterialIds, setSelectedMaterialIds] = useState<string[]>([])
   const [materialSearch, setMaterialSearch] = useState("")
+  const [materialScrollTop, setMaterialScrollTop] = useState(0)
   const [quantityInput, setQuantityInput] = useState("")
   const [cart, setCart] = useState<InventoryRequestLine[]>([])
   const [lastSubmittedSummary, setLastSubmittedSummary] = useState("")
+  const materialListRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    let isActive = true
+
+    async function hydrateMaterials() {
+      setIsLoadingMaterials(true)
+
+      const result = await loadMaterials()
+
+      if (!isActive) {
+        return
+      }
+
+      setMaterials(result.materials)
+      setMaterialsError(result.error ?? "")
+      setIsLoadingMaterials(false)
+    }
+
+    void hydrateMaterials()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   const selectedRequester =
     mockRequesters.find((requester) => requester.stageId.toString() === selectedRequesterId) ?? null
+  const deferredMaterialSearch = useDeferredValue(materialSearch)
   const filteredRequesters = mockRequesters.filter((requester) => {
     const query = requesterSearch.trim().toLowerCase()
 
@@ -43,19 +78,28 @@ export default function HomePage() {
       requester.requesterEmail.toLowerCase().includes(query)
     )
   })
-  const filteredMaterials = mockMaterials.filter((material) => {
-    const query = materialSearch.trim().toLowerCase()
-
-    if (!query) {
-      return true
-    }
-
-    return (
-      material.materialName.toLowerCase().includes(query) ||
-      material.productCode.toLowerCase().includes(query)
-    )
-  })
-  const selectedMaterials = mockMaterials.filter((material) =>
+  const normalizedMaterialSearch = deferredMaterialSearch.trim().toLowerCase()
+  const matchingMaterials = normalizedMaterialSearch
+    ? materials.filter((material) => {
+        return (
+          material.materialName.toLowerCase().includes(normalizedMaterialSearch) ||
+          material.productCode.toLowerCase().includes(normalizedMaterialSearch)
+        )
+      })
+    : materials
+  const virtualStartIndex = Math.max(
+    0,
+    Math.floor(materialScrollTop / materialListRowHeight) - materialListOverscan
+  )
+  const virtualVisibleCount =
+    Math.ceil(materialListViewportHeight / materialListRowHeight) + materialListOverscan * 2
+  const virtualEndIndex = Math.min(
+    matchingMaterials.length,
+    virtualStartIndex + virtualVisibleCount
+  )
+  const visibleMaterials = matchingMaterials.slice(virtualStartIndex, virtualEndIndex)
+  const virtualHeight = matchingMaterials.length * materialListRowHeight
+  const selectedMaterials = materials.filter((material) =>
     selectedMaterialIds.includes(material.materialId.toString())
   )
   const totalQuantity = cart.reduce((sum, item) => sum + item.qty, 0)
@@ -66,6 +110,14 @@ export default function HomePage() {
       ? parsedQuantity
       : null
 
+  useEffect(() => {
+    setMaterialScrollTop(0)
+
+    if (materialListRef.current) {
+      materialListRef.current.scrollTop = 0
+    }
+  }, [normalizedMaterialSearch, materials])
+
   function toggleMaterialSelection(materialId: string) {
     setSelectedMaterialIds((currentIds) =>
       currentIds.includes(materialId)
@@ -74,11 +126,15 @@ export default function HomePage() {
     )
   }
 
+  function toggleRequesterSelection(requesterId: string) {
+    setSelectedRequesterId((currentId) => (currentId === requesterId ? "" : requesterId))
+  }
+
   function selectAllMaterials() {
     setSelectedMaterialIds((currentIds) => {
       const nextIds = new Set(currentIds)
 
-      for (const material of filteredMaterials) {
+      for (const material of matchingMaterials) {
         nextIds.add(material.materialId.toString())
       }
 
@@ -242,7 +298,7 @@ export default function HomePage() {
                           ? "border-primary/60 bg-primary/10"
                           : "border-transparent hover:bg-secondary"
                       }`}
-                      onClick={() => setSelectedRequesterId(requester.stageId.toString())}
+                      onClick={() => toggleRequesterSelection(requester.stageId.toString())}
                     >
                       <p className="font-medium text-foreground">
                         {requester.stage} - {requester.requesterName}
@@ -285,6 +341,12 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {materialsError && (
+              <div className="rounded-lg border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-foreground">
+                {materialsError}
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground" htmlFor="material-search">
                 Search Materials
@@ -294,48 +356,99 @@ export default function HomePage() {
                 placeholder="Type a material name or product code"
                 value={materialSearch}
                 onChange={(event) => setMaterialSearch(event.target.value)}
+                disabled={isLoadingMaterials || Boolean(materialsError)}
               />
+              <p className="text-xs text-muted-foreground">
+                Scroll to browse or search by material name or product code.
+              </p>
             </div>
 
             <div className="flex items-center justify-between gap-3">
               <label className="text-sm font-medium text-foreground">Materials</label>
               <div className="flex items-center gap-2">
-                <Button type="button" variant="ghost" size="sm" onClick={selectAllMaterials}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={selectAllMaterials}
+                  disabled={isLoadingMaterials || Boolean(materialsError) || matchingMaterials.length === 0}
+                >
                   Select All
                 </Button>
-                <Button type="button" variant="ghost" size="sm" onClick={clearSelectedMaterials}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSelectedMaterials}
+                  disabled={Boolean(materialsError) || selectedMaterialIds.length === 0}
+                >
                   Clear
                 </Button>
               </div>
             </div>
 
-            <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border border-border bg-background p-2">
-              {filteredMaterials.length > 0 ? (
-                filteredMaterials.map((material) => {
-                  const materialId = material.materialId.toString()
-                  const isSelected = selectedMaterialIds.includes(materialId)
+            <div
+              ref={materialListRef}
+              className="max-h-72 overflow-y-auto rounded-lg border border-border bg-background p-2"
+              onScroll={(event) => setMaterialScrollTop(event.currentTarget.scrollTop)}
+            >
+              {isLoadingMaterials ? (
+                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                  Loading materials from SQL...
+                </div>
+              ) : materialsError ? (
+                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                  Materials are unavailable. Open the app from the Power Apps Local Play URL or notify IT.
+                </div>
+              ) : matchingMaterials.length > 0 ? (
+                <div
+                  className="relative"
+                  style={{ height: virtualHeight }}
+                >
+                  {visibleMaterials.map((material, index) => {
+                    const materialId = material.materialId.toString()
+                    const isSelected = selectedMaterialIds.includes(materialId)
+                    const absoluteIndex = virtualStartIndex + index
 
-                  return (
-                    <button
-                      key={material.materialId}
-                      type="button"
-                      className={`w-full rounded-lg border p-3 text-left transition ${
-                        isSelected
-                          ? "border-primary/60 bg-primary/10"
-                          : "border-transparent hover:bg-secondary"
-                      }`}
-                      onClick={() => toggleMaterialSelection(materialId)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Checkbox checked={isSelected} className="mt-0.5 pointer-events-none" />
-                        <div className="min-w-0">
-                          <p className="font-medium text-foreground">{material.materialName}</p>
-                          <p className="text-sm text-muted-foreground">{material.productCode}</p>
+                    return (
+                      <button
+                        key={material.materialId}
+                        type="button"
+                        className={`absolute left-0 right-0 rounded-lg border px-3 py-3 text-left transition ${
+                          isSelected
+                            ? "border-primary/60 bg-primary/10"
+                            : "border-border/80 bg-card hover:bg-secondary"
+                        }`}
+                        style={{
+                          top: absoluteIndex * materialListRowHeight,
+                          height: materialListItemHeight,
+                        }}
+                        onClick={() => toggleMaterialSelection(materialId)}
+                      >
+                        <div className="flex h-full items-start gap-3">
+                          <Checkbox
+                            checked={isSelected}
+                            className="mt-0.5 pointer-events-none"
+                          />
+                          <div className="min-w-0">
+                            <p
+                              className="font-medium text-foreground"
+                              style={{
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                              }}
+                            >
+                              {material.materialName}
+                            </p>
+                            <p className="text-sm text-muted-foreground">{material.productCode}</p>
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  )
-                })
+                      </button>
+                    )
+                  })}
+                </div>
               ) : (
                 <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
                   No materials matched your search.
@@ -405,7 +518,7 @@ export default function HomePage() {
               type="button"
               className="w-full"
               onClick={addSelectedMaterials}
-              disabled={selectedMaterials.length === 0}
+              disabled={isLoadingMaterials || Boolean(materialsError) || selectedMaterials.length === 0}
             >
               Add Selected Materials
             </Button>
