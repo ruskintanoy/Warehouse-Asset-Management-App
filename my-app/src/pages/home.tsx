@@ -24,7 +24,7 @@ export default function HomePage() {
   const [requesterSearch, setRequesterSearch] = useState("")
   const [selectedMaterialIds, setSelectedMaterialIds] = useState<string[]>([])
   const [materialSearch, setMaterialSearch] = useState("")
-  const [quantity, setQuantity] = useState(1)
+  const [quantityInput, setQuantityInput] = useState("")
   const [cart, setCart] = useState<InventoryRequestLine[]>([])
   const [lastSubmittedSummary, setLastSubmittedSummary] = useState("")
 
@@ -59,6 +59,12 @@ export default function HomePage() {
     selectedMaterialIds.includes(material.materialId.toString())
   )
   const totalQuantity = cart.reduce((sum, item) => sum + item.qty, 0)
+  const parsedQuantity =
+    quantityInput.trim() === "" ? null : Number.parseInt(quantityInput, 10)
+  const quantityToAdd =
+    parsedQuantity !== null && Number.isFinite(parsedQuantity) && parsedQuantity > 0
+      ? parsedQuantity
+      : null
 
   function toggleMaterialSelection(materialId: string) {
     setSelectedMaterialIds((currentIds) =>
@@ -90,6 +96,11 @@ export default function HomePage() {
       return
     }
 
+    if (!quantityToAdd) {
+      toast.error("Enter a quantity greater than 0 before adding materials.")
+      return
+    }
+
     setCart((currentCart) => {
       const cartById = new Map(currentCart.map((line) => [line.materialId, line]))
 
@@ -99,7 +110,7 @@ export default function HomePage() {
         if (existingLine) {
           cartById.set(material.materialId, {
             ...existingLine,
-            qty: existingLine.qty + quantity,
+            qty: existingLine.qty + quantityToAdd,
           })
           continue
         }
@@ -108,7 +119,7 @@ export default function HomePage() {
           materialId: material.materialId,
           materialName: material.materialName,
           productCode: material.productCode,
-          qty: quantity,
+          qty: quantityToAdd,
         })
       }
 
@@ -117,7 +128,7 @@ export default function HomePage() {
 
     setSelectedMaterialIds([])
     setMaterialSearch("")
-    setQuantity(1)
+    setQuantityInput("")
     toast.success(
       `${selectedMaterials.length} material${selectedMaterials.length === 1 ? "" : "s"} added to the request.`
     )
@@ -145,7 +156,7 @@ export default function HomePage() {
     setRequesterSearch("")
     setSelectedMaterialIds([])
     setMaterialSearch("")
-    setQuantity(1)
+    setQuantityInput("")
     setCart([])
   }
 
@@ -355,25 +366,35 @@ export default function HomePage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setQuantity((currentQty) => Math.max(1, currentQty - 1))}
+                  onClick={() => {
+                    const currentQty = quantityToAdd ?? 0
+                    setQuantityInput(currentQty <= 1 ? "" : String(currentQty - 1))
+                  }}
                 >
                   -
                 </Button>
                 <Input
                   id="material-qty"
-                  type="number"
-                  min={1}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Enter quantity"
                   className="text-center"
-                  value={quantity}
+                  value={quantityInput}
                   onChange={(event) => {
-                    const nextValue = Number.parseInt(event.target.value, 10)
-                    setQuantity(Number.isNaN(nextValue) || nextValue < 1 ? 1 : nextValue)
+                    const nextValue = event.target.value
+
+                    if (nextValue === "" || /^\d+$/.test(nextValue)) {
+                      setQuantityInput(nextValue)
+                    }
                   }}
                 />
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setQuantity((currentQty) => currentQty + 1)}
+                  onClick={() => {
+                    const currentQty = quantityToAdd ?? 0
+                    setQuantityInput(String(currentQty + 1))
+                  }}
                 >
                   +
                 </Button>
