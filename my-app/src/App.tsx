@@ -6,7 +6,7 @@ import { router } from "@/router"
 
 export default function App() {
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="light" storageKey="residential-inventory-theme">
       <SonnerProvider>
         <QueryProvider>
           <RouterProvider router={router} />

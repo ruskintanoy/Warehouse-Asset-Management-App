@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: Aptos, "Trebuchet MS", "Segoe UI", sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -13,37 +13,37 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: #faf6ef;
+  --foreground: #231f20;
+  --card: #fffdf9;
+  --card-foreground: #231f20;
+  --popover: #fffdf9;
+  --popover-foreground: #231f20;
+  --primary: rgb(192 215 51);
+  --primary-foreground: #231f20;
+  --secondary: #f5ede1;
+  --secondary-foreground: #231f20;
+  --muted: #efe5d6;
+  --muted-foreground: #6d6158;
+  --accent: rgb(233 108 38);
+  --accent-foreground: #fffaf5;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --border: #dfd2c1;
+  --input: #fffaf4;
+  --ring: rgb(192 215 51);
+  --chart-1: rgb(192 215 51);
+  --chart-2: rgb(233 108 38);
+  --chart-3: rgb(166 101 40);
+  --chart-4: #8b7a6d;
+  --chart-5: #d98b46;
+  --sidebar: #fffdf9;
+  --sidebar-foreground: #231f20;
+  --sidebar-primary: rgb(192 215 51);
+  --sidebar-primary-foreground: #231f20;
+  --sidebar-accent: #f5ede1;
+  --sidebar-accent-foreground: #231f20;
+  --sidebar-border: #dfd2c1;
+  --sidebar-ring: rgb(192 215 51);
 }
 
 @theme inline {
@@ -127,5 +127,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at top left, rgb(233 108 38 / 0.1), transparent 28%),
+      radial-gradient(circle at top right, rgb(166 101 40 / 0.08), transparent 24%);
   }
 }
