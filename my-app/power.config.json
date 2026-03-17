@@ -29,6 +29,14 @@
           }
         }
       }
+    },
+    "27da4734-db88-4527-b16e-24dcf4762bcb": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_office365users",
+      "displayName": "Office 365 Users",
+      "dataSources": [
+        "office365users"
+      ],
+      "dataSets": {}
     }
   },
   "databaseReferences": {}

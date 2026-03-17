@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useRef, useState } from "react"
 import { DataLoadAlert } from "@/components/data-load-alert"
+import { SelectableListRow } from "@/components/selectable-list-row"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -9,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import {
   type Requester,
@@ -23,16 +23,17 @@ import { loadRequesters } from "@/lib/requesters"
 import { toast } from "sonner"
 
 export default function HomePage() {
-  const materialListViewportHeight = 288
-  const materialListRowHeight = 88
-  const materialListItemHeight = 80
-  const materialListOverscan = 6
+  const selectionListViewportHeight = 288
+  const selectionListRowHeight = 88
+  const selectionListItemHeight = 80
+  const selectionListOverscan = 6
   const companyLogoUrl = "https://onetrac.prophitmgmt.com:8443/pml/resources/spaar_small.png"
   const [selectedRequesterId, setSelectedRequesterId] = useState("")
   const [requesterSearch, setRequesterSearch] = useState("")
   const [requesters, setRequesters] = useState<Requester[]>([])
   const [isLoadingRequesters, setIsLoadingRequesters] = useState(true)
   const [requestersError, setRequestersError] = useState<DataLoadError | null>(null)
+  const [requesterScrollTop, setRequesterScrollTop] = useState(0)
   const [materials, setMaterials] = useState<Material[]>([])
   const [isLoadingMaterials, setIsLoadingMaterials] = useState(true)
   const [materialsError, setMaterialsError] = useState<DataLoadError | null>(null)
@@ -42,6 +43,7 @@ export default function HomePage() {
   const [quantityInput, setQuantityInput] = useState("")
   const [cart, setCart] = useState<InventoryRequestLine[]>([])
   const [lastSubmittedSummary, setLastSubmittedSummary] = useState("")
+  const requesterListRef = useRef<HTMLDivElement | null>(null)
   const materialListRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -94,9 +96,11 @@ export default function HomePage() {
 
   const selectedRequester =
     requesters.find((requester) => requester.stageId.toString() === selectedRequesterId) ?? null
+  const deferredRequesterSearch = useDeferredValue(requesterSearch)
   const deferredMaterialSearch = useDeferredValue(materialSearch)
+  const normalizedRequesterSearch = deferredRequesterSearch.trim().toLowerCase()
   const filteredRequesters = requesters.filter((requester) => {
-    const query = requesterSearch.trim().toLowerCase()
+    const query = normalizedRequesterSearch
 
     if (!query) {
       return true
@@ -107,6 +111,21 @@ export default function HomePage() {
       requester.requesterName.toLowerCase().includes(query)
     )
   })
+  const requesterVirtualStartIndex = Math.max(
+    0,
+    Math.floor(requesterScrollTop / selectionListRowHeight) - selectionListOverscan
+  )
+  const requesterVirtualVisibleCount =
+    Math.ceil(selectionListViewportHeight / selectionListRowHeight) + selectionListOverscan * 2
+  const requesterVirtualEndIndex = Math.min(
+    filteredRequesters.length,
+    requesterVirtualStartIndex + requesterVirtualVisibleCount
+  )
+  const visibleRequesters = filteredRequesters.slice(
+    requesterVirtualStartIndex,
+    requesterVirtualEndIndex
+  )
+  const requesterVirtualHeight = filteredRequesters.length * selectionListRowHeight
   const normalizedMaterialSearch = deferredMaterialSearch.trim().toLowerCase()
   const matchingMaterials = normalizedMaterialSearch
     ? materials.filter((material) => {
@@ -118,16 +137,16 @@ export default function HomePage() {
     : materials
   const virtualStartIndex = Math.max(
     0,
-    Math.floor(materialScrollTop / materialListRowHeight) - materialListOverscan
+    Math.floor(materialScrollTop / selectionListRowHeight) - selectionListOverscan
   )
   const virtualVisibleCount =
-    Math.ceil(materialListViewportHeight / materialListRowHeight) + materialListOverscan * 2
+    Math.ceil(selectionListViewportHeight / selectionListRowHeight) + selectionListOverscan * 2
   const virtualEndIndex = Math.min(
     matchingMaterials.length,
     virtualStartIndex + virtualVisibleCount
   )
   const visibleMaterials = matchingMaterials.slice(virtualStartIndex, virtualEndIndex)
-  const virtualHeight = matchingMaterials.length * materialListRowHeight
+  const virtualHeight = matchingMaterials.length * selectionListRowHeight
   const selectedMaterials = materials.filter((material) =>
     selectedMaterialIds.includes(material.materialId.toString())
   )
@@ -138,6 +157,14 @@ export default function HomePage() {
     parsedQuantity !== null && Number.isFinite(parsedQuantity) && parsedQuantity > 0
       ? parsedQuantity
       : null
+
+  useEffect(() => {
+    setRequesterScrollTop(0)
+
+    if (requesterListRef.current) {
+      requesterListRef.current.scrollTop = 0
+    }
+  }, [normalizedRequesterSearch, requesters])
 
   useEffect(() => {
     setMaterialScrollTop(0)
@@ -157,6 +184,10 @@ export default function HomePage() {
 
   function toggleRequesterSelection(requesterId: string) {
     setSelectedRequesterId((currentId) => (currentId === requesterId ? "" : requesterId))
+  }
+
+  function clearRequesterSelection() {
+    setSelectedRequesterId("")
   }
 
   function selectAllMaterials() {
@@ -314,7 +345,24 @@ export default function HomePage() {
               />
             </div>
 
-            <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border border-border bg-background p-2">
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-sm font-medium text-foreground">Technicians</label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearRequesterSelection}
+                disabled={Boolean(requestersError) || !selectedRequesterId}
+              >
+                Clear
+              </Button>
+            </div>
+
+            <div
+              ref={requesterListRef}
+              className="max-h-72 overflow-y-auto rounded-lg border border-border bg-background p-2"
+              onScroll={(event) => setRequesterScrollTop(event.currentTarget.scrollTop)}
+            >
               {isLoadingRequesters ? (
                 <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
                   Loading technicians from SQL...
@@ -322,29 +370,28 @@ export default function HomePage() {
               ) : requestersError ? (
                 <DataLoadAlert error={requestersError} />
               ) : filteredRequesters.length > 0 ? (
-                filteredRequesters.map((requester) => {
-                  const isSelected = requester.stageId.toString() === selectedRequesterId
+                <div className="relative" style={{ height: requesterVirtualHeight }}>
+                  {visibleRequesters.map((requester, index) => {
+                    const requesterId = requester.stageId.toString()
+                    const isSelected = requesterId === selectedRequesterId
+                    const absoluteIndex = requesterVirtualStartIndex + index
 
-                  return (
-                    <button
-                      key={requester.stageId}
-                      type="button"
-                      className={`w-full rounded-lg border p-3 text-left transition ${
-                        isSelected
-                          ? "border-primary/60 bg-primary/10"
-                          : "border-transparent hover:bg-secondary"
-                      }`}
-                      onClick={() => toggleRequesterSelection(requester.stageId.toString())}
-                    >
-                      <p className="font-medium text-foreground">
-                        {requester.stage} - {requester.requesterName}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Office 365 email lookup pending
-                      </p>
-                    </button>
-                  )
-                })
+                    return (
+                      <SelectableListRow
+                        key={requester.stageId}
+                        title={`${requester.stage} - ${requester.requesterName}`}
+                        subtitle="Office 365 email lookup pending"
+                        isSelected={isSelected}
+                        className="absolute left-0 right-0"
+                        style={{
+                          top: absoluteIndex * selectionListRowHeight,
+                          height: selectionListItemHeight,
+                        }}
+                        onClick={() => toggleRequesterSelection(requesterId)}
+                      />
+                    )
+                  })}
+                </div>
               ) : (
                 <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
                   No technicians matched your search.
@@ -449,41 +496,19 @@ export default function HomePage() {
                     const absoluteIndex = virtualStartIndex + index
 
                     return (
-                      <button
+                      <SelectableListRow
                         key={material.materialId}
-                        type="button"
-                        className={`absolute left-0 right-0 rounded-lg border px-3 py-3 text-left transition ${
-                          isSelected
-                            ? "border-primary/60 bg-primary/10"
-                            : "border-border/80 bg-card hover:bg-secondary"
-                        }`}
+                        title={material.materialName}
+                        subtitle={material.productCode}
+                        titleClamp={2}
+                        isSelected={isSelected}
+                        className="absolute left-0 right-0"
                         style={{
-                          top: absoluteIndex * materialListRowHeight,
-                          height: materialListItemHeight,
+                          top: absoluteIndex * selectionListRowHeight,
+                          height: selectionListItemHeight,
                         }}
                         onClick={() => toggleMaterialSelection(materialId)}
-                      >
-                        <div className="flex h-full items-start gap-3">
-                          <Checkbox
-                            checked={isSelected}
-                            className="mt-0.5 pointer-events-none"
-                          />
-                          <div className="min-w-0">
-                            <p
-                              className="font-medium text-foreground"
-                              style={{
-                                display: "-webkit-box",
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: "vertical",
-                                overflow: "hidden",
-                              }}
-                            >
-                              {material.materialName}
-                            </p>
-                            <p className="text-sm text-muted-foreground">{material.productCode}</p>
-                          </div>
-                        </div>
-                      </button>
+                      />
                     )
                   })}
                 </div>

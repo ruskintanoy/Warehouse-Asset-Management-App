@@ -7,7 +7,9 @@
 export * as CommonModels from './models/CommonModels';
 export * as GetTechListModel from './models/GetTechListModel';
 export * as Material_descModel from './models/Material_descModel';
+export * as Office365UsersModel from './models/Office365UsersModel';
 
 // Services
 export * from './services/GetTechListService';
 export * from './services/Material_descService';
+export * from './services/Office365UsersService';
