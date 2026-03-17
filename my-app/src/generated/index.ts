@@ -5,7 +5,9 @@
 
 // Models
 export * as CommonModels from './models/CommonModels';
+export * as GetTechListModel from './models/GetTechListModel';
 export * as Material_descModel from './models/Material_descModel';
 
 // Services
+export * from './services/GetTechListService';
 export * from './services/Material_descService';

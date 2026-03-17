@@ -1,11 +1,12 @@
 import { Material_descService } from "@/generated"
 import type { Material_desc } from "@/generated/models/Material_descModel"
 import type { Material } from "@/lib/inventory"
+import { createDataLoadError, type DataLoadError } from "@/lib/load-errors"
 
 export type MaterialLoadResult = {
   materials: Material[]
   source: "sql" | "unavailable"
-  error?: string
+  error?: DataLoadError
 }
 
 function toMaterial(record: Material_desc): Material | null {
@@ -51,7 +52,7 @@ async function fetchSqlMaterials(): Promise<Material[]> {
   return materials
 }
 
-function getMaterialLoadErrorMessage(error: unknown): string {
+function getMaterialLoadError(error: unknown): DataLoadError {
   const rawMessage = error instanceof Error ? error.message : ""
   const normalizedMessage = rawMessage.toLowerCase()
 
@@ -59,14 +60,23 @@ function getMaterialLoadErrorMessage(error: unknown): string {
     normalizedMessage.includes("powermetadataclient is not available") ||
     normalizedMessage.includes("powerdataclient is not available")
   ) {
-    return "The SQL material list is unavailable in this session. Open the app using the Power Apps Local Play URL from npm run dev, not plain localhost. If it still fails, notify IT."
+    return createDataLoadError(
+      "We couldn't load the material list. Please notify IT.",
+      "Material data is unavailable in the current Local Play session."
+    )
   }
 
   if (normalizedMessage.includes("connection reference not found")) {
-    return "The SQL material connection is not available in this app. Notify IT."
+    return createDataLoadError(
+      "We couldn't load the material list. Please notify IT.",
+      "Material data source is missing from the current app session."
+    )
   }
 
-  return "The SQL material list could not be loaded. Refresh the page. If it still fails, notify IT."
+  return createDataLoadError(
+    "We couldn't load the material list. Please notify IT.",
+    "Material list load failed."
+  )
 }
 
 export async function loadMaterials(): Promise<MaterialLoadResult> {
@@ -83,7 +93,7 @@ export async function loadMaterials(): Promise<MaterialLoadResult> {
     return {
       materials: [],
       source: "unavailable",
-      error: getMaterialLoadErrorMessage(error),
+      error: getMaterialLoadError(error),
     }
   }
 }

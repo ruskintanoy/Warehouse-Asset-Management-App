@@ -1,4 +1,5 @@
 import { useDeferredValue, useEffect, useRef, useState } from "react"
+import { DataLoadAlert } from "@/components/data-load-alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,12 +12,14 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import {
-  mockRequesters,
+  type Requester,
   type Material,
   type InventoryRequestLine,
   type SubmitPayload,
 } from "@/lib/inventory"
+import type { DataLoadError } from "@/lib/load-errors"
 import { loadMaterials } from "@/lib/materials"
+import { loadRequesters } from "@/lib/requesters"
 import { toast } from "sonner"
 
 export default function HomePage() {
@@ -27,9 +30,12 @@ export default function HomePage() {
   const companyLogoUrl = "https://onetrac.prophitmgmt.com:8443/pml/resources/spaar_small.png"
   const [selectedRequesterId, setSelectedRequesterId] = useState("")
   const [requesterSearch, setRequesterSearch] = useState("")
+  const [requesters, setRequesters] = useState<Requester[]>([])
+  const [isLoadingRequesters, setIsLoadingRequesters] = useState(true)
+  const [requestersError, setRequestersError] = useState<DataLoadError | null>(null)
   const [materials, setMaterials] = useState<Material[]>([])
   const [isLoadingMaterials, setIsLoadingMaterials] = useState(true)
-  const [materialsError, setMaterialsError] = useState("")
+  const [materialsError, setMaterialsError] = useState<DataLoadError | null>(null)
   const [selectedMaterialIds, setSelectedMaterialIds] = useState<string[]>([])
   const [materialSearch, setMaterialSearch] = useState("")
   const [materialScrollTop, setMaterialScrollTop] = useState(0)
@@ -37,6 +43,30 @@ export default function HomePage() {
   const [cart, setCart] = useState<InventoryRequestLine[]>([])
   const [lastSubmittedSummary, setLastSubmittedSummary] = useState("")
   const materialListRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    let isActive = true
+
+    async function hydrateRequesters() {
+      setIsLoadingRequesters(true)
+
+      const result = await loadRequesters()
+
+      if (!isActive) {
+        return
+      }
+
+      setRequesters(result.requesters)
+      setRequestersError(result.error ?? null)
+      setIsLoadingRequesters(false)
+    }
+
+    void hydrateRequesters()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   useEffect(() => {
     let isActive = true
@@ -51,7 +81,7 @@ export default function HomePage() {
       }
 
       setMaterials(result.materials)
-      setMaterialsError(result.error ?? "")
+      setMaterialsError(result.error ?? null)
       setIsLoadingMaterials(false)
     }
 
@@ -63,9 +93,9 @@ export default function HomePage() {
   }, [])
 
   const selectedRequester =
-    mockRequesters.find((requester) => requester.stageId.toString() === selectedRequesterId) ?? null
+    requesters.find((requester) => requester.stageId.toString() === selectedRequesterId) ?? null
   const deferredMaterialSearch = useDeferredValue(materialSearch)
-  const filteredRequesters = mockRequesters.filter((requester) => {
+  const filteredRequesters = requesters.filter((requester) => {
     const query = requesterSearch.trim().toLowerCase()
 
     if (!query) {
@@ -74,8 +104,7 @@ export default function HomePage() {
 
     return (
       requester.stage.toLowerCase().includes(query) ||
-      requester.requesterName.toLowerCase().includes(query) ||
-      requester.requesterEmail.toLowerCase().includes(query)
+      requester.requesterName.toLowerCase().includes(query)
     )
   })
   const normalizedMaterialSearch = deferredMaterialSearch.trim().toLowerCase()
@@ -278,14 +307,21 @@ export default function HomePage() {
               </label>
               <Input
                 id="requester-search"
-                placeholder="Type a technician name, unit, or email"
+                placeholder="Type a technician name or unit"
                 value={requesterSearch}
                 onChange={(event) => setRequesterSearch(event.target.value)}
+                disabled={isLoadingRequesters || Boolean(requestersError)}
               />
             </div>
 
             <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border border-border bg-background p-2">
-              {filteredRequesters.length > 0 ? (
+              {isLoadingRequesters ? (
+                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                  Loading technicians from SQL...
+                </div>
+              ) : requestersError ? (
+                <DataLoadAlert error={requestersError} />
+              ) : filteredRequesters.length > 0 ? (
                 filteredRequesters.map((requester) => {
                   const isSelected = requester.stageId.toString() === selectedRequesterId
 
@@ -303,7 +339,9 @@ export default function HomePage() {
                       <p className="font-medium text-foreground">
                         {requester.stage} - {requester.requesterName}
                       </p>
-                      <p className="text-sm text-muted-foreground">{requester.requesterEmail}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Office 365 email lookup pending
+                      </p>
                     </button>
                   )
                 })
@@ -326,7 +364,9 @@ export default function HomePage() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">Requester Email</p>
-                  <p className="font-medium text-foreground">{selectedRequester.requesterEmail}</p>
+                  <p className="font-medium text-foreground">
+                    {selectedRequester.requesterEmail || "Office 365 lookup pending"}
+                  </p>
                 </div>
               </div>
             )}
@@ -342,9 +382,7 @@ export default function HomePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {materialsError && (
-              <div className="rounded-lg border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-foreground">
-                {materialsError}
-              </div>
+              <DataLoadAlert error={materialsError} />
             )}
 
             <div className="space-y-2">
@@ -398,7 +436,7 @@ export default function HomePage() {
                 </div>
               ) : materialsError ? (
                 <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-                  Materials are unavailable. Open the app from the Power Apps Local Play URL or notify IT.
+                  Material list unavailable.
                 </div>
               ) : matchingMaterials.length > 0 ? (
                 <div
