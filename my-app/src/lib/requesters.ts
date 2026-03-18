@@ -1,7 +1,7 @@
 import { GetTechListService } from "@/generated"
 import type { GetTechListResponse } from "@/generated/models/GetTechListModel"
 import type { Requester } from "@/lib/inventory"
-import { createDataLoadError, type DataLoadError } from "@/lib/load-errors"
+import { createDataLoadError, type DataLoadError, logDiagnostic } from "@/lib/load-errors"
 
 export type RequesterLoadResult = {
   requesters: Requester[]
@@ -96,30 +96,8 @@ function toRequester(row: SqlResultRow): Requester | null {
 }
 
 function getRequesterLoadError(error: unknown): DataLoadError {
-  const rawMessage = error instanceof Error ? error.message : ""
-  const normalizedMessage = rawMessage.toLowerCase()
-
-  if (
-    normalizedMessage.includes("powermetadataclient is not available") ||
-    normalizedMessage.includes("powerdataclient is not available")
-  ) {
-    return createDataLoadError(
-      "We couldn't load the technician list. Please notify IT.",
-      "Technician data is unavailable in the current Local Play session."
-    )
-  }
-
-  if (normalizedMessage.includes("connection reference not found")) {
-    return createDataLoadError(
-      "We couldn't load the technician list. Please notify IT.",
-      "Technician data source is missing from the current app session."
-    )
-  }
-
-  return createDataLoadError(
-    "We couldn't load the technician list. Please notify IT.",
-    "Technician list load failed."
-  )
+  void error
+  return createDataLoadError("Failed to load technicians. Refresh and try again.")
 }
 
 async function fetchSqlRequesters(): Promise<Requester[]> {
@@ -139,7 +117,7 @@ async function fetchSqlRequesters(): Promise<Requester[]> {
     .sort((left, right) => left.stage.localeCompare(right.stage))
 
   if (requesters.length === 0) {
-    console.info("GetTechList returned no requester rows.", result.data)
+    logDiagnostic("requesters.empty", result.data)
   }
 
   return requesters
@@ -154,14 +132,11 @@ export async function loadRequesters(): Promise<RequesterLoadResult> {
       source: "sql",
       error:
         requesters.length === 0
-          ? createDataLoadError(
-              "We couldn't load the technician list. Please notify IT.",
-              "Technician stored procedure returned no rows."
-            )
+          ? createDataLoadError("Failed to load technicians. Refresh and try again.")
           : undefined,
     }
   } catch (error) {
-    console.error("Failed to load technicians from SQL.", error)
+    logDiagnostic("requesters.load", error)
 
     return {
       requesters: [],

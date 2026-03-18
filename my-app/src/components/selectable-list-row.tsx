@@ -10,6 +10,7 @@ type SelectableListRowProps = {
   style?: CSSProperties
   className?: string
   titleClamp?: 1 | 2
+  showCheckbox?: boolean
 }
 
 export function SelectableListRow({
@@ -20,12 +21,13 @@ export function SelectableListRow({
   style,
   className,
   titleClamp = 1,
+  showCheckbox = true,
 }: SelectableListRowProps) {
   return (
     <button
       type="button"
       className={cn(
-        "w-full rounded-lg border px-3 py-3 text-left transition",
+        "w-full rounded-md border px-2.5 py-1.5 text-left transition",
         isSelected
           ? "border-primary/60 bg-primary/10"
           : "border-border/80 bg-card hover:bg-secondary",
@@ -34,11 +36,13 @@ export function SelectableListRow({
       style={style}
       onClick={onClick}
     >
-      <div className="flex h-full items-start gap-3">
-        <Checkbox checked={isSelected} className="mt-0.5 pointer-events-none" />
+      <div className={cn("flex h-full items-start", showCheckbox ? "gap-2" : "gap-0")}>
+        {showCheckbox ? (
+          <Checkbox checked={isSelected} className="mt-0.5 pointer-events-none" />
+        ) : null}
         <div className="min-w-0">
           <p
-            className="font-medium text-foreground"
+            className="text-sm font-medium leading-5 text-foreground"
             style={
               titleClamp === 2
                 ? {
@@ -52,7 +56,9 @@ export function SelectableListRow({
           >
             {title}
           </p>
-          {subtitle ? <p className="text-sm text-muted-foreground">{subtitle}</p> : null}
+          {subtitle ? (
+            <p className="mt-0.5 text-xs leading-4 text-muted-foreground">{subtitle}</p>
+          ) : null}
         </div>
       </div>
     </button>

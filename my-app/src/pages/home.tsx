@@ -1,5 +1,9 @@
 import { useDeferredValue, useEffect, useRef, useState } from "react"
+import { CheckCheck, Eraser, Minus, Plus, ShoppingCart } from "lucide-react"
 import { DataLoadAlert } from "@/components/data-load-alert"
+import { LoadingState } from "@/components/loading-state"
+import { RequesterPicker } from "@/components/requester-picker"
+import { RequestSummaryCard } from "@/components/request-summary-card"
 import { SelectableListRow } from "@/components/selectable-list-row"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -29,21 +33,19 @@ type RequesterEmailLookupState = {
 }
 
 export default function HomePage() {
-  const selectionListViewportHeight = 288
-  const selectionListRowHeight = 88
-  const selectionListItemHeight = 80
+  const selectionListViewportHeight = 272
+  const selectionListRowHeight = 62
+  const selectionListItemHeight = 56
   const selectionListOverscan = 6
   const requesterEmailLookupBatchSize = 5
   const companyLogoUrl = "https://onetrac.prophitmgmt.com:8443/pml/resources/spaar_small.png"
   const [selectedRequesterId, setSelectedRequesterId] = useState("")
-  const [requesterSearch, setRequesterSearch] = useState("")
   const [requesters, setRequesters] = useState<Requester[]>([])
   const [isLoadingRequesters, setIsLoadingRequesters] = useState(true)
   const [requestersError, setRequestersError] = useState<DataLoadError | null>(null)
   const [requesterEmailLookupByName, setRequesterEmailLookupByName] = useState<
     Record<string, RequesterEmailLookupState>
   >({})
-  const [requesterScrollTop, setRequesterScrollTop] = useState(0)
   const [materials, setMaterials] = useState<Material[]>([])
   const [isLoadingMaterials, setIsLoadingMaterials] = useState(true)
   const [materialsError, setMaterialsError] = useState<DataLoadError | null>(null)
@@ -55,7 +57,6 @@ export default function HomePage() {
   const [lastSubmittedSummary, setLastSubmittedSummary] = useState("")
   const requestersRef = useRef<Requester[]>([])
   const requesterEmailLookupByNameRef = useRef<Record<string, RequesterEmailLookupState>>({})
-  const requesterListRef = useRef<HTMLDivElement | null>(null)
   const materialListRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -120,36 +121,7 @@ export default function HomePage() {
     ? requesterEmailLookupByName[selectedRequester.requesterName]
     : undefined
   const isResolvingSelectedRequesterEmail = selectedRequesterEmailLookup?.status === "loading"
-  const deferredRequesterSearch = useDeferredValue(requesterSearch)
   const deferredMaterialSearch = useDeferredValue(materialSearch)
-  const normalizedRequesterSearch = deferredRequesterSearch.trim().toLowerCase()
-  const filteredRequesters = requesters.filter((requester) => {
-    const query = normalizedRequesterSearch
-
-    if (!query) {
-      return true
-    }
-
-    return (
-      requester.stage.toLowerCase().includes(query) ||
-      requester.requesterName.toLowerCase().includes(query)
-    )
-  })
-  const requesterVirtualStartIndex = Math.max(
-    0,
-    Math.floor(requesterScrollTop / selectionListRowHeight) - selectionListOverscan
-  )
-  const requesterVirtualVisibleCount =
-    Math.ceil(selectionListViewportHeight / selectionListRowHeight) + selectionListOverscan * 2
-  const requesterVirtualEndIndex = Math.min(
-    filteredRequesters.length,
-    requesterVirtualStartIndex + requesterVirtualVisibleCount
-  )
-  const visibleRequesters = filteredRequesters.slice(
-    requesterVirtualStartIndex,
-    requesterVirtualEndIndex
-  )
-  const requesterVirtualHeight = filteredRequesters.length * selectionListRowHeight
   const normalizedMaterialSearch = deferredMaterialSearch.trim().toLowerCase()
   const matchingMaterials = normalizedMaterialSearch
     ? materials.filter((material) => {
@@ -256,8 +228,7 @@ export default function HomePage() {
             status: "error",
             error:
               result.error ?? {
-                message: "We couldn't confirm the technician email. Please notify IT.",
-                supportHint: `Office 365 email lookup failed for ${requesterName}.`,
+                message: "Email unavailable.",
               },
           }
         }
@@ -294,14 +265,6 @@ export default function HomePage() {
   ])
 
   useEffect(() => {
-    setRequesterScrollTop(0)
-
-    if (requesterListRef.current) {
-      requesterListRef.current.scrollTop = 0
-    }
-  }, [normalizedRequesterSearch, requesterDirectorySignature])
-
-  useEffect(() => {
     setMaterialScrollTop(0)
 
     if (materialListRef.current) {
@@ -325,6 +288,22 @@ export default function HomePage() {
     setSelectedRequesterId("")
   }
 
+  function getSelectedRequesterEmailDisplay() {
+    if (selectedRequester?.requesterEmail) {
+      return selectedRequester.requesterEmail
+    }
+
+    if (isResolvingSelectedRequesterEmail) {
+      return "Looking up email..."
+    }
+
+    if (selectedRequesterEmailLookup?.status === "error") {
+      return selectedRequesterEmailLookup.error?.message ?? "Email unavailable."
+    }
+
+    return "Looking up email..."
+  }
+
   function getRequesterSubtitle(requester: Requester) {
     if (requester.requesterEmail) {
       return requester.requesterEmail
@@ -337,7 +316,7 @@ export default function HomePage() {
     }
 
     if (lookupState?.status === "error") {
-      return "Email unavailable. Notify IT."
+      return "Email unavailable"
     }
 
     return "Looking up email..."
@@ -422,7 +401,6 @@ export default function HomePage() {
 
   function resetFormState() {
     setSelectedRequesterId("")
-    setRequesterSearch("")
     setSelectedMaterialIds([])
     setMaterialSearch("")
     setQuantityInput("")
@@ -439,7 +417,7 @@ export default function HomePage() {
       toast.error(
         isResolvingSelectedRequesterEmail
           ? "Please wait while we confirm the technician email."
-          : "We couldn't confirm the technician email. Please notify IT."
+          : "Email unavailable."
       )
       return
     }
@@ -458,7 +436,7 @@ export default function HomePage() {
       `Request prepared for ${selectedRequester.requesterName} with ${cart.length} material item${cart.length === 1 ? "" : "s"}.`
     )
     resetFormState()
-    toast.success("Request prepared for Power Automate.")
+    toast.success("Request prepared.")
   }
 
   return (
@@ -476,7 +454,7 @@ export default function HomePage() {
             </h1>
           </div>
           <p className="text-sm text-muted-foreground sm:max-w-xs sm:text-right">
-            Select the technician, add materials, and submit the request.
+              Select the technician, add materials, and submit the request.
           </p>
         </div>
       </div>
@@ -487,367 +465,247 @@ export default function HomePage() {
         </div>
       )}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
         <Card>
-          <CardHeader>
-            <CardTitle>Requester</CardTitle>
-            <CardDescription>Search and select the technician and unit.</CardDescription>
+          <CardHeader className="pb-4">
+            <CardTitle>Create Request</CardTitle>
+            <CardDescription>Select a technician and add materials.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground" htmlFor="requester-search">
-                Search Technician / Unit
-              </label>
-              <Input
-                id="requester-search"
-                placeholder="Type a technician name or unit"
-                value={requesterSearch}
-                onChange={(event) => setRequesterSearch(event.target.value)}
-                disabled={isLoadingRequesters || Boolean(requestersError)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between gap-3">
-              <label className="text-sm font-medium text-foreground">Technicians</label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={clearRequesterSelection}
-                disabled={Boolean(requestersError) || !selectedRequesterId}
-              >
-                Clear
-              </Button>
-            </div>
-
-            <div
-              ref={requesterListRef}
-              className="max-h-72 overflow-y-auto rounded-lg border border-border bg-background p-2"
-              onScroll={(event) => setRequesterScrollTop(event.currentTarget.scrollTop)}
-            >
-              {isLoadingRequesters ? (
-                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-                  Loading technicians from SQL...
-                </div>
-              ) : requestersError ? (
-                <DataLoadAlert error={requestersError} />
-              ) : filteredRequesters.length > 0 ? (
-                <div className="relative" style={{ height: requesterVirtualHeight }}>
-                  {visibleRequesters.map((requester, index) => {
-                    const requesterId = requester.stageId.toString()
-                    const isSelected = requesterId === selectedRequesterId
-                    const absoluteIndex = requesterVirtualStartIndex + index
-
-                    return (
-                      <SelectableListRow
-                        key={requester.stageId}
-                        title={`${requester.stage} - ${requester.requesterName}`}
-                        subtitle={getRequesterSubtitle(requester)}
-                        isSelected={isSelected}
-                        className="absolute left-0 right-0"
-                        style={{
-                          top: absoluteIndex * selectionListRowHeight,
-                          height: selectionListItemHeight,
-                        }}
-                        onClick={() => toggleRequesterSelection(requesterId)}
-                      />
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-                  No technicians matched your search.
-                </div>
-              )}
-            </div>
-
-            {selectedRequester && (
-              <div className="space-y-3 rounded-lg border border-border bg-secondary p-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Stage</p>
-                  <p className="font-medium text-foreground">{selectedRequester.stage}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Requester Name</p>
-                  <p className="font-medium text-foreground">{selectedRequester.requesterName}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Requester Email</p>
-                  <p className="font-medium text-foreground">
-                    {selectedRequester.requesterEmail ||
-                      (isResolvingSelectedRequesterEmail
-                        ? "Looking up email..."
-                        : selectedRequesterEmailLookup?.status === "error"
-                          ? selectedRequesterEmailLookup.error?.message
-                          : "Looking up email...")}
-                  </p>
-                  {selectedRequesterEmailLookup?.status === "error" &&
-                    selectedRequesterEmailLookup.error?.supportHint && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        IT hint: {selectedRequesterEmailLookup.error.supportHint}
-                      </p>
-                    )}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Add Materials</CardTitle>
-            <CardDescription>
-              Search and select one or more materials with the same quantity.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {materialsError && (
-              <DataLoadAlert error={materialsError} />
-            )}
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground" htmlFor="material-search">
-                Search Materials
-              </label>
-              <Input
-                id="material-search"
-                placeholder="Type a material name or product code"
-                value={materialSearch}
-                onChange={(event) => setMaterialSearch(event.target.value)}
-                disabled={isLoadingMaterials || Boolean(materialsError)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Scroll to browse or search by material name or product code.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between gap-3">
-              <label className="text-sm font-medium text-foreground">Materials</label>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={selectAllMaterials}
-                  disabled={isLoadingMaterials || Boolean(materialsError) || matchingMaterials.length === 0}
-                >
-                  Select All
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearSelectedMaterials}
-                  disabled={Boolean(materialsError) || selectedMaterialIds.length === 0}
-                >
-                  Clear
-                </Button>
-              </div>
-            </div>
-
-            <div
-              ref={materialListRef}
-              className="max-h-72 overflow-y-auto rounded-lg border border-border bg-background p-2"
-              onScroll={(event) => setMaterialScrollTop(event.currentTarget.scrollTop)}
-            >
-              {isLoadingMaterials ? (
-                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-                  Loading materials from SQL...
-                </div>
-              ) : materialsError ? (
-                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-                  Material list unavailable.
-                </div>
-              ) : matchingMaterials.length > 0 ? (
-                <div
-                  className="relative"
-                  style={{ height: virtualHeight }}
-                >
-                  {visibleMaterials.map((material, index) => {
-                    const materialId = material.materialId.toString()
-                    const isSelected = selectedMaterialIds.includes(materialId)
-                    const absoluteIndex = virtualStartIndex + index
-
-                    return (
-                      <SelectableListRow
-                        key={material.materialId}
-                        title={material.materialName}
-                        subtitle={material.productCode}
-                        titleClamp={2}
-                        isSelected={isSelected}
-                        className="absolute left-0 right-0"
-                        style={{
-                          top: absoluteIndex * selectionListRowHeight,
-                          height: selectionListItemHeight,
-                        }}
-                        onClick={() => toggleMaterialSelection(materialId)}
-                      />
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-                  No materials matched your search.
-                </div>
-              )}
-            </div>
-
-            {selectedMaterials.length > 0 && (
-              <div className="rounded-lg border border-border bg-secondary p-4 text-sm">
-                <p className="font-medium text-foreground">
-                  {selectedMaterials.length} material{selectedMaterials.length === 1 ? "" : "s"} selected
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {selectedMaterials.map((material) => (
-                    <Badge key={material.materialId} variant="outline">
-                      {material.productCode}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground" htmlFor="material-qty">
-                Quantity for all selected materials
-              </label>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const currentQty = quantityToAdd ?? 0
-                    setQuantityInput(currentQty <= 1 ? "" : String(currentQty - 1))
-                  }}
-                >
-                  -
-                </Button>
-                <Input
-                  id="material-qty"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="Enter quantity"
-                  className="text-center"
-                  value={quantityInput}
-                  onChange={(event) => {
-                    const nextValue = event.target.value
-
-                    if (nextValue === "" || /^\d+$/.test(nextValue)) {
-                      setQuantityInput(nextValue)
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const currentQty = quantityToAdd ?? 0
-                    setQuantityInput(String(currentQty + 1))
-                  }}
-                >
-                  +
-                </Button>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              className="w-full"
-              onClick={addSelectedMaterials}
-              disabled={isLoadingMaterials || Boolean(materialsError) || selectedMaterials.length === 0}
-            >
-              Add Selected Materials
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Current Request</CardTitle>
-          <CardDescription>Review the materials before submitting.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            <div>
-              <span className="font-medium text-foreground">Requester:</span>{" "}
-              {selectedRequester?.requesterName ?? "Not selected"}
-            </div>
-            <div>
-              <span className="font-medium text-foreground">Stage:</span>{" "}
-              {selectedRequester?.stage ?? "Not selected"}
-            </div>
-            <div>
-              <span className="font-medium text-foreground">Total Quantity:</span> {totalQuantity}
-            </div>
-          </div>
-
-          {cart.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-              No materials added yet.
-            </div>
-          ) : (
+          <CardContent className="space-y-5">
             <div className="space-y-3">
-              {cart.map((line) => (
-                <div
-                  key={line.materialId}
-                  className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <p className="font-medium text-foreground">{line.materialName}</p>
-                    <p className="text-sm text-muted-foreground">{line.productCode}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => changeCartQty(line.materialId, line.qty - 1)}
-                    >
-                      -
-                    </Button>
-                    <Badge variant="outline" className="min-w-14 justify-center">
-                      Qty {line.qty}
-                    </Badge>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => changeCartQty(line.materialId, line.qty + 1)}
-                    >
-                      +
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => removeCartLine(line.materialId)}
-                    >
-                      Remove
-                    </Button>
+              <p className="text-sm font-medium text-foreground">1. Select Technician</p>
+
+              <RequesterPicker
+                requesters={requesters}
+                selectedRequesterId={selectedRequesterId}
+                isLoading={isLoadingRequesters}
+                error={requestersError}
+                onSelect={toggleRequesterSelection}
+                onClear={clearRequesterSelection}
+                getRequesterSubtitle={getRequesterSubtitle}
+              />
+
+              {selectedRequester ? (
+                <div className="rounded-lg border border-border bg-secondary/70 p-3">
+                  <div className="grid gap-2.5 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Unit</p>
+                      <p className="mt-1 text-sm font-medium text-foreground">
+                        {selectedRequester.stage}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Technician
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-foreground">
+                        {selectedRequester.requesterName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Email
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-foreground">
+                        {getSelectedRequesterEmailDisplay()}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              ))}
+              ) : null}
             </div>
-          )}
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              type="button"
-              className="sm:flex-1"
-              disabled={
-                !selectedRequester ||
-                !selectedRequester.requesterEmail ||
-                isResolvingSelectedRequesterEmail ||
-                cart.length === 0
-              }
-              onClick={submitRequest}
-            >
-              Submit Request
-            </Button>
-            <Button type="button" variant="outline" className="sm:flex-1" onClick={resetFormState}>
-              Start Over
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="border-t border-border" />
+
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-foreground">2. Add Materials</p>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground" htmlFor="material-search">
+                  Search Materials
+                </label>
+                <Input
+                  id="material-search"
+                  placeholder="Type a material name or product code"
+                  value={materialSearch}
+                  onChange={(event) => setMaterialSearch(event.target.value)}
+                  disabled={isLoadingMaterials || Boolean(materialsError)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-sm font-medium text-foreground">Available Materials</label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={selectAllMaterials}
+                    disabled={
+                      isLoadingMaterials || Boolean(materialsError) || matchingMaterials.length === 0
+                    }
+                  >
+                    <CheckCheck className="size-4" />
+                    Select All
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSelectedMaterials}
+                    disabled={Boolean(materialsError) || selectedMaterialIds.length === 0}
+                  >
+                    <Eraser className="size-4" />
+                    Clear
+                  </Button>
+                </div>
+              </div>
+
+              <div
+                ref={materialListRef}
+                className="max-h-72 overflow-y-auto rounded-xl border border-border bg-background p-1.5"
+                onScroll={(event) => setMaterialScrollTop(event.currentTarget.scrollTop)}
+              >
+                {isLoadingMaterials ? (
+                  <LoadingState
+                    title="Loading materials"
+                    subtitle="Please wait a moment."
+                  />
+                ) : materialsError ? (
+                  <DataLoadAlert error={materialsError} />
+                ) : matchingMaterials.length > 0 ? (
+                  <div className="relative" style={{ height: virtualHeight }}>
+                    {visibleMaterials.map((material, index) => {
+                      const materialId = material.materialId.toString()
+                      const isSelected = selectedMaterialIds.includes(materialId)
+                      const absoluteIndex = virtualStartIndex + index
+
+                      return (
+                        <SelectableListRow
+                          key={material.materialId}
+                          title={material.materialName}
+                          subtitle={material.productCode}
+                          titleClamp={2}
+                          isSelected={isSelected}
+                          className="absolute left-0 right-0"
+                          style={{
+                            top: absoluteIndex * selectionListRowHeight,
+                            height: selectionListItemHeight,
+                          }}
+                          onClick={() => toggleMaterialSelection(materialId)}
+                        />
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                    No materials matched your search.
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-border bg-secondary/70 p-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {selectedMaterials.length} material{selectedMaterials.length === 1 ? "" : "s"} selected
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedMaterials.slice(0, 4).map((material) => (
+                      <Badge key={material.materialId} variant="outline">
+                        {material.productCode}
+                      </Badge>
+                    ))}
+                    {selectedMaterials.length > 4 ? (
+                      <Badge variant="outline">+{selectedMaterials.length - 4} more</Badge>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="mt-2.5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground" htmlFor="material-qty">
+                      Quantity for all selected materials
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          const currentQty = quantityToAdd ?? 0
+                          setQuantityInput(currentQty <= 1 ? "" : String(currentQty - 1))
+                        }}
+                      >
+                        <Minus className="size-4" />
+                      </Button>
+                      <Input
+                        id="material-qty"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Enter quantity"
+                        className="text-center"
+                        value={quantityInput}
+                        onChange={(event) => {
+                          const nextValue = event.target.value
+
+                          if (nextValue === "" || /^\d+$/.test(nextValue)) {
+                            setQuantityInput(nextValue)
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          const currentQty = quantityToAdd ?? 0
+                          setQuantityInput(String(currentQty + 1))
+                        }}
+                      >
+                        <Plus className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    className="sm:min-w-52"
+                    onClick={addSelectedMaterials}
+                    disabled={
+                      isLoadingMaterials ||
+                      Boolean(materialsError) ||
+                      selectedMaterials.length === 0
+                    }
+                  >
+                    <ShoppingCart className="size-4" />
+                    Add Selected Materials
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <RequestSummaryCard
+          requesterName={selectedRequester?.requesterName ?? "Not selected"}
+          stage={selectedRequester?.stage ?? "Not selected"}
+          requesterEmail={selectedRequester ? getSelectedRequesterEmailDisplay() : "Not selected"}
+          cart={cart}
+          totalQuantity={totalQuantity}
+          canSubmit={
+            Boolean(selectedRequester) &&
+            Boolean(selectedRequester?.requesterEmail) &&
+            !isResolvingSelectedRequesterEmail &&
+            cart.length > 0
+          }
+          onSubmit={submitRequest}
+          onStartOver={resetFormState}
+          onChangeQty={changeCartQty}
+          onRemoveLine={removeCartLine}
+        />
+      </div>
     </div>
   )
 }

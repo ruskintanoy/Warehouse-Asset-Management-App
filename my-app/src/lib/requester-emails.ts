@@ -1,6 +1,6 @@
 import { Office365UsersService } from "@/generated"
 import type { User } from "@/generated/models/Office365UsersModel"
-import { createDataLoadError, type DataLoadError } from "@/lib/load-errors"
+import { createDataLoadError, type DataLoadError, logDiagnostic } from "@/lib/load-errors"
 
 export type RequesterEmailLookupResult = {
   email: string | null
@@ -81,30 +81,9 @@ function getBestUserMatch(users: User[], requesterName: string): User | null {
 }
 
 function getRequesterEmailError(error: unknown, requesterName: string): DataLoadError {
-  const rawMessage = error instanceof Error ? error.message : ""
-  const normalizedMessage = rawMessage.toLowerCase()
-
-  if (
-    normalizedMessage.includes("powermetadataclient is not available") ||
-    normalizedMessage.includes("powerdataclient is not available")
-  ) {
-    return createDataLoadError(
-      "We couldn't confirm the technician email. Please notify IT.",
-      "Office 365 Users connector is unavailable in the current Local Play session."
-    )
-  }
-
-  if (normalizedMessage.includes("connection reference not found")) {
-    return createDataLoadError(
-      "We couldn't confirm the technician email. Please notify IT.",
-      "Office 365 Users data source is missing from the current app session."
-    )
-  }
-
-  return createDataLoadError(
-    "We couldn't confirm the technician email. Please notify IT.",
-    `Office 365 email lookup failed for ${requesterName}.`
-  )
+  void error
+  void requesterName
+  return createDataLoadError("Email unavailable.")
 }
 
 export async function lookupRequesterEmail(
@@ -142,7 +121,7 @@ export async function lookupRequesterEmail(
       email,
     }
   } catch (error) {
-    console.error("Failed to look up technician email.", error)
+    logDiagnostic("requester-email.lookup", { requesterName, error })
 
     return {
       email: null,

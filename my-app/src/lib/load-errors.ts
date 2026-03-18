@@ -1,14 +1,13 @@
 export type DataLoadError = {
   message: string
-  supportHint: string
 }
 
-export function createDataLoadError(
-  message: string,
-  supportHint: string
-): DataLoadError {
+export function createDataLoadError(message: string): DataLoadError {
   return {
     message,
-    supportHint,
   }
+}
+
+export function logDiagnostic(scope: string, details: unknown) {
+  console.error(`InventoryApp:${scope}`, details)
 }
