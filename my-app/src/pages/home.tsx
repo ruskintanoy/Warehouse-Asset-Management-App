@@ -19,20 +19,30 @@ import {
 } from "@/lib/inventory"
 import type { DataLoadError } from "@/lib/load-errors"
 import { loadMaterials } from "@/lib/materials"
+import { lookupRequesterEmail } from "@/lib/requester-emails"
 import { loadRequesters } from "@/lib/requesters"
 import { toast } from "sonner"
+
+type RequesterEmailLookupState = {
+  status: "loading" | "resolved" | "error"
+  error?: DataLoadError
+}
 
 export default function HomePage() {
   const selectionListViewportHeight = 288
   const selectionListRowHeight = 88
   const selectionListItemHeight = 80
   const selectionListOverscan = 6
+  const requesterEmailLookupBatchSize = 5
   const companyLogoUrl = "https://onetrac.prophitmgmt.com:8443/pml/resources/spaar_small.png"
   const [selectedRequesterId, setSelectedRequesterId] = useState("")
   const [requesterSearch, setRequesterSearch] = useState("")
   const [requesters, setRequesters] = useState<Requester[]>([])
   const [isLoadingRequesters, setIsLoadingRequesters] = useState(true)
   const [requestersError, setRequestersError] = useState<DataLoadError | null>(null)
+  const [requesterEmailLookupByName, setRequesterEmailLookupByName] = useState<
+    Record<string, RequesterEmailLookupState>
+  >({})
   const [requesterScrollTop, setRequesterScrollTop] = useState(0)
   const [materials, setMaterials] = useState<Material[]>([])
   const [isLoadingMaterials, setIsLoadingMaterials] = useState(true)
@@ -43,6 +53,8 @@ export default function HomePage() {
   const [quantityInput, setQuantityInput] = useState("")
   const [cart, setCart] = useState<InventoryRequestLine[]>([])
   const [lastSubmittedSummary, setLastSubmittedSummary] = useState("")
+  const requestersRef = useRef<Requester[]>([])
+  const requesterEmailLookupByNameRef = useRef<Record<string, RequesterEmailLookupState>>({})
   const requesterListRef = useRef<HTMLDivElement | null>(null)
   const materialListRef = useRef<HTMLDivElement | null>(null)
 
@@ -94,8 +106,20 @@ export default function HomePage() {
     }
   }, [])
 
+  useEffect(() => {
+    requestersRef.current = requesters
+  }, [requesters])
+
+  useEffect(() => {
+    requesterEmailLookupByNameRef.current = requesterEmailLookupByName
+  }, [requesterEmailLookupByName])
+
   const selectedRequester =
     requesters.find((requester) => requester.stageId.toString() === selectedRequesterId) ?? null
+  const selectedRequesterEmailLookup = selectedRequester
+    ? requesterEmailLookupByName[selectedRequester.requesterName]
+    : undefined
+  const isResolvingSelectedRequesterEmail = selectedRequesterEmailLookup?.status === "loading"
   const deferredRequesterSearch = useDeferredValue(requesterSearch)
   const deferredMaterialSearch = useDeferredValue(materialSearch)
   const normalizedRequesterSearch = deferredRequesterSearch.trim().toLowerCase()
@@ -157,6 +181,117 @@ export default function HomePage() {
     parsedQuantity !== null && Number.isFinite(parsedQuantity) && parsedQuantity > 0
       ? parsedQuantity
       : null
+  const requesterDirectorySignature = requesters
+    .map((requester) => `${requester.stageId}:${requester.requesterName}`)
+    .join("|")
+
+  useEffect(() => {
+    let isActive = true
+
+    async function hydrateRequesterEmails() {
+      const currentRequesters = requestersRef.current
+      const currentLookupState = requesterEmailLookupByNameRef.current
+
+      if (isLoadingRequesters || currentRequesters.length === 0 || requestersError) {
+        return
+      }
+
+      const requesterNamesToResolve = Array.from(
+        new Set(
+          currentRequesters
+            .filter((requester) => requester.requesterEmail === "")
+            .map((requester) => requester.requesterName)
+        )
+      ).filter((requesterName) => !currentLookupState[requesterName])
+
+      if (requesterNamesToResolve.length === 0) {
+        return
+      }
+
+      setRequesterEmailLookupByName((current) => ({
+        ...current,
+        ...Object.fromEntries(
+          requesterNamesToResolve.map((requesterName) => [
+            requesterName,
+            {
+              status: "loading",
+            } satisfies RequesterEmailLookupState,
+          ])
+        ),
+      }))
+
+      for (
+        let index = 0;
+        index < requesterNamesToResolve.length;
+        index += requesterEmailLookupBatchSize
+      ) {
+        const requesterNameBatch = requesterNamesToResolve.slice(
+          index,
+          index + requesterEmailLookupBatchSize
+        )
+        const batchResults = await Promise.all(
+          requesterNameBatch.map(async (requesterName) => ({
+            requesterName,
+            result: await lookupRequesterEmail(requesterName),
+          }))
+        )
+
+        if (!isActive) {
+          return
+        }
+
+        const resolvedEmails = new Map<string, string>()
+        const nextLookupPatch: Record<string, RequesterEmailLookupState> = {}
+
+        for (const { requesterName, result } of batchResults) {
+          if (result.email) {
+            resolvedEmails.set(requesterName, result.email)
+            nextLookupPatch[requesterName] = {
+              status: "resolved",
+            }
+            continue
+          }
+
+          nextLookupPatch[requesterName] = {
+            status: "error",
+            error:
+              result.error ?? {
+                message: "We couldn't confirm the technician email. Please notify IT.",
+                supportHint: `Office 365 email lookup failed for ${requesterName}.`,
+              },
+          }
+        }
+
+        if (resolvedEmails.size > 0) {
+          setRequesters((current) =>
+            current.map((requester) => {
+              const resolvedEmail = resolvedEmails.get(requester.requesterName)
+
+              return resolvedEmail
+                ? { ...requester, requesterEmail: resolvedEmail }
+                : requester
+            })
+          )
+        }
+
+        setRequesterEmailLookupByName((current) => ({
+          ...current,
+          ...nextLookupPatch,
+        }))
+      }
+    }
+
+    void hydrateRequesterEmails()
+
+    return () => {
+      isActive = false
+    }
+  }, [
+    isLoadingRequesters,
+    requesterDirectorySignature,
+    requestersError,
+    requesterEmailLookupBatchSize,
+  ])
 
   useEffect(() => {
     setRequesterScrollTop(0)
@@ -164,7 +299,7 @@ export default function HomePage() {
     if (requesterListRef.current) {
       requesterListRef.current.scrollTop = 0
     }
-  }, [normalizedRequesterSearch, requesters])
+  }, [normalizedRequesterSearch, requesterDirectorySignature])
 
   useEffect(() => {
     setMaterialScrollTop(0)
@@ -188,6 +323,24 @@ export default function HomePage() {
 
   function clearRequesterSelection() {
     setSelectedRequesterId("")
+  }
+
+  function getRequesterSubtitle(requester: Requester) {
+    if (requester.requesterEmail) {
+      return requester.requesterEmail
+    }
+
+    const lookupState = requesterEmailLookupByName[requester.requesterName]
+
+    if (lookupState?.status === "loading") {
+      return "Looking up email..."
+    }
+
+    if (lookupState?.status === "error") {
+      return "Email unavailable. Notify IT."
+    }
+
+    return "Looking up email..."
   }
 
   function selectAllMaterials() {
@@ -279,6 +432,15 @@ export default function HomePage() {
   function submitRequest() {
     if (!selectedRequester || cart.length === 0) {
       toast.error("Choose a technician and add at least one material before submitting.")
+      return
+    }
+
+    if (!selectedRequester.requesterEmail) {
+      toast.error(
+        isResolvingSelectedRequesterEmail
+          ? "Please wait while we confirm the technician email."
+          : "We couldn't confirm the technician email. Please notify IT."
+      )
       return
     }
 
@@ -380,7 +542,7 @@ export default function HomePage() {
                       <SelectableListRow
                         key={requester.stageId}
                         title={`${requester.stage} - ${requester.requesterName}`}
-                        subtitle="Office 365 email lookup pending"
+                        subtitle={getRequesterSubtitle(requester)}
                         isSelected={isSelected}
                         className="absolute left-0 right-0"
                         style={{
@@ -412,8 +574,19 @@ export default function HomePage() {
                 <div>
                   <p className="text-muted-foreground">Requester Email</p>
                   <p className="font-medium text-foreground">
-                    {selectedRequester.requesterEmail || "Office 365 lookup pending"}
+                    {selectedRequester.requesterEmail ||
+                      (isResolvingSelectedRequesterEmail
+                        ? "Looking up email..."
+                        : selectedRequesterEmailLookup?.status === "error"
+                          ? selectedRequesterEmailLookup.error?.message
+                          : "Looking up email...")}
                   </p>
+                  {selectedRequesterEmailLookup?.status === "error" &&
+                    selectedRequesterEmailLookup.error?.supportHint && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        IT hint: {selectedRequesterEmailLookup.error.supportHint}
+                      </p>
+                    )}
                 </div>
               </div>
             )}
@@ -659,7 +832,12 @@ export default function HomePage() {
             <Button
               type="button"
               className="sm:flex-1"
-              disabled={!selectedRequester || cart.length === 0}
+              disabled={
+                !selectedRequester ||
+                !selectedRequester.requesterEmail ||
+                isResolvingSelectedRequesterEmail ||
+                cart.length === 0
+              }
               onClick={submitRequest}
             >
               Submit Request
