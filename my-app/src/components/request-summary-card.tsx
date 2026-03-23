@@ -45,7 +45,7 @@ export function RequestSummaryCard({
   onRemoveLine,
 }: RequestSummaryCardProps) {
   return (
-    <Card className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-hidden">
+    <Card className="2xl:sticky 2xl:top-6 2xl:max-h-[calc(100vh-3rem)] 2xl:overflow-hidden">
       <CardHeader className="space-y-2.5 pb-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -79,7 +79,10 @@ export function RequestSummaryCard({
           </div>
         ) : (
           <div className="min-h-0 overflow-hidden rounded-lg border border-border bg-card">
-            <div className="max-h-[26rem] overflow-y-auto">
+            <div
+              className="max-h-[26rem] overflow-y-auto touch-pan-y"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
               {cart.map((line) => (
                 <div
                   key={line.materialId}

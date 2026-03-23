@@ -142,7 +142,10 @@ export function RequesterPicker({
               </Button>
             </div>
 
-            <div className="max-h-72 overflow-y-auto rounded-lg border border-border bg-background p-1.5">
+            <div
+              className="max-h-72 overflow-y-auto rounded-lg border border-border bg-background p-1.5 touch-pan-y"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
               {isLoading ? (
                 <LoadingState
                   title="Loading technicians"

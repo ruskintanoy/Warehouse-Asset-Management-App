@@ -440,7 +440,13 @@ export default function HomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div
+      className="mx-auto max-w-6xl px-4 py-6"
+      style={{
+        paddingBottom: "max(calc(env(safe-area-inset-bottom, 0px) + 12rem), 24vh)",
+        scrollPaddingBottom: "max(calc(env(safe-area-inset-bottom, 0px) + 12rem), 24vh)",
+      }}
+    >
       <div className="rounded-xl border bg-card p-4 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
@@ -450,7 +456,7 @@ export default function HomePage() {
               className="h-12 w-auto object-contain sm:h-14"
             />
             <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-              Residential Inventory Request
+              Residential Inventory Checkout
             </h1>
           </div>
           <p className="text-sm text-muted-foreground sm:max-w-xs sm:text-right">
@@ -465,7 +471,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
+      <div className="mt-6 grid gap-5 2xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)] 2xl:items-start">
         <Card>
           <CardHeader className="pb-4">
             <CardTitle>Create Request</CardTitle>
@@ -563,7 +569,8 @@ export default function HomePage() {
 
               <div
                 ref={materialListRef}
-                className="max-h-72 overflow-y-auto rounded-xl border border-border bg-background p-1.5"
+                className="max-h-72 overflow-y-auto rounded-xl border border-border bg-background p-1.5 touch-pan-y"
+                style={{ WebkitOverflowScrolling: "touch" }}
                 onScroll={(event) => setMaterialScrollTop(event.currentTarget.scrollTop)}
               >
                 {isLoadingMaterials ? (
