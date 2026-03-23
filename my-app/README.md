@@ -1,25 +1,15 @@
-# Power Apps Template - starter
+# Material Checkout App
 
-An opinionated **Vite + TypeScript + React** starter template for building Power Apps code apps.
+Warehouse kiosk application for creating material checkout requests in Power Apps.
 
-Designed for common app scenarios, easy extensibility, and minimal setup.
+## Current State
+- Starter template cleaned down to a small React + TypeScript + Vite app
+- Unused template libraries and demo files removed
+- Ready for a component-driven kiosk implementation
 
----
-
-## Highlights
-- **Modern tooling** - Vite, TypeScript, and React
-- **Out-of-box styling** - Tailwind, shadcn/ui components, and theming out of the box
-- **Batteries included** - Curated libraries pre-wired for common scenarios
-- **Standard patterns** - Industry standard patterns and practices
-- **Agent friendly** - Optimized for use with coding agents
----
-
-## Pre-installed libraries
-- [Tailwind CSS](https://tailwindcss.com/) - utility-first CSS framework
-- [shadcn/ui](https://ui.shadcn.com/) - pre-installed UI components
-- [React Router](https://reactrouter.com/) - pages, routing
-- [Zustand](https://zustand.docs.pmnd.rs/) - state management
-- [Tanstack Query](https://tanstack.com/query/latest) - data fetching, state management
-- [Tanstack Table](https://tanstack.com/table/latest) - interactive tables, datagrids
-- [Lucide](https://lucide.dev/) - icons
-  
+## Planned Flow
+1. User types and selects their name from the stage list
+2. User searches for materials and adds quantities
+3. User reviews the request and adds notes
+4. User submits the request
+5. Success dialog confirms the submission and offers a new request
