@@ -9,6 +9,35 @@
   "buildEntryPoint": "index.html",
   "localAppUrl": "http://localhost:3000",
   "logoPath": "Default",
-  "connectionReferences": {},
+  "connectionReferences": {
+    "31cf9b94-1adb-4893-8fd6-b44b65791e85": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_sql",
+      "displayName": "SQL Server",
+      "dataSources": [
+        "material_desc",
+        "_31cf9b94_1adb_4893_8fd6_b44b65791e85_sp"
+      ],
+      "authenticationType": "windowsAuthentication",
+      "sharedConnectionId": "/providers/Microsoft.PowerApps/apis/shared_sql/connections/f83a71abe6c949eaa20886e6e938118d",
+      "dataSets": {
+        "prosql03,onetrac": {
+          "dataSources": {
+            "material_desc": {
+              "tableName": "[dbo].[material_desc]"
+            },
+            "_31cf9b94_1adb_4893_8fd6_b44b65791e85_sp": {}
+          }
+        }
+      }
+    },
+    "6bdcf52c-05b9-4039-8564-cf34c5bd2f08": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_office365users",
+      "displayName": "Office 365 Users",
+      "dataSources": [
+        "office365users"
+      ],
+      "dataSets": {}
+    }
+  },
   "databaseReferences": {}
 }
