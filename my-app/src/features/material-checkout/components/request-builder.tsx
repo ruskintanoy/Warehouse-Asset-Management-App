@@ -1,16 +1,8 @@
-import { useEffect, useRef, useState } from "react"
+import { useDeferredValue, useEffect, useRef, useState } from "react"
 import { Box, Check, ChevronDown, FileText, Minus, PackageCheck, Plus, RotateCcw, UserRound, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -27,6 +19,8 @@ type RequestBuilderProps = {
   resetVersion: number
   isLoadingTechnicians?: boolean
   technicianError?: string | null
+  isLoadingMaterials?: boolean
+  materialError?: string | null
   onSelectTechnician: (technician: Technician) => void
   onNotesChange: (notes: string) => void
   onAddMaterials: (materials: MaterialRequestLine[]) => void
@@ -40,17 +34,31 @@ export function RequestBuilder({
   resetVersion,
   isLoadingTechnicians = false,
   technicianError,
+  isLoadingMaterials = false,
+  materialError,
   onSelectTechnician,
   onNotesChange,
   onAddMaterials,
 }: RequestBuilderProps) {
   const [isMaterialPickerOpen, setIsMaterialPickerOpen] = useState(false)
   const [draftMaterials, setDraftMaterials] = useState<MaterialRequestLine[]>([])
+  const [materialSearch, setMaterialSearch] = useState("")
   const materialPanelRef = useRef<HTMLDivElement | null>(null)
+  const deferredMaterialSearch = useDeferredValue(materialSearch)
+
+  const normalizedMaterialSearch = deferredMaterialSearch.trim().toLowerCase()
+  const matchingMaterials = normalizedMaterialSearch
+    ? materials.filter((material) =>
+        `${material.name} ${material.productCode} ${material.unit}`.toLowerCase().includes(normalizedMaterialSearch)
+      )
+    : materials
+  const visibleMaterials = matchingMaterials.slice(0, normalizedMaterialSearch ? 100 : 75)
+  const hasMoreMaterialResults = matchingMaterials.length > visibleMaterials.length
 
   useEffect(() => {
     setIsMaterialPickerOpen(false)
     setDraftMaterials([])
+    setMaterialSearch("")
   }, [resetVersion])
 
   useEffect(() => {
@@ -114,7 +122,7 @@ export function RequestBuilder({
       <CardHeader className="gap-1 px-4 py-4 sm:px-5">
         <CardTitle className="text-xl">Request Details</CardTitle>
         <CardDescription>
-          Choose the technician, select one or more materials, then add optional notes.
+          Select technician, add one or more materials, then add notes(if applicable).
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5 px-4 pb-4 sm:px-5">
@@ -168,6 +176,7 @@ export function RequestBuilder({
                 onClick={() => {
                   setIsMaterialPickerOpen(false)
                   setDraftMaterials([])
+                  setMaterialSearch("")
                 }}
                 disabled={draftMaterials.length === 0}
                 aria-label="Reset material selection"
@@ -182,6 +191,7 @@ export function RequestBuilder({
                 variant="outline"
                 role="combobox"
                 aria-expanded={isMaterialPickerOpen}
+                disabled={isLoadingMaterials || Boolean(materialError)}
                 className="h-auto min-h-10 w-full justify-between px-3 py-2.5 text-left"
                 onClick={() => setIsMaterialPickerOpen((currentOpen) => !currentOpen)}
               >
@@ -192,7 +202,9 @@ export function RequestBuilder({
                     </span>
                   ) : (
                     <span className="text-muted-foreground">
-                      Search and select materials
+                      {isLoadingMaterials
+                        ? "Loading materials..."
+                        : materialError || "Search and select materials"}
                     </span>
                   )}
                 </span>
@@ -201,51 +213,73 @@ export function RequestBuilder({
 
               {isMaterialPickerOpen && (
                 <div ref={materialPanelRef} className="rounded-md border bg-popover shadow-sm">
-                <Command>
-                  <CommandInput autoFocus placeholder="Search material name, product code, or unit..." />
-                  <CommandList>
-                    <CommandEmpty>No materials match that search.</CommandEmpty>
-                    <CommandGroup>
-                      {materials.map((material) => {
-                        const isSelected = draftMaterials.some(
-                          (draft) => getMaterialKey(draft) === getMaterialKey(material)
-                        )
+                  <div className="border-b p-2">
+                    <Input
+                      autoFocus
+                      value={materialSearch}
+                      onChange={(event) => setMaterialSearch(event.target.value)}
+                      placeholder="Search material name, product code, or unit..."
+                    />
+                  </div>
+                  <div className="max-h-72 overflow-y-auto p-1">
+                    {visibleMaterials.length === 0 ? (
+                      <div className="text-muted-foreground px-3 py-5 text-center text-sm">
+                        No materials match that search.
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {visibleMaterials.map((material) => {
+                          const isSelected = draftMaterials.some(
+                            (draft) => getMaterialKey(draft) === getMaterialKey(material)
+                          )
 
-                        return (
-                          <CommandItem
-                            key={getMaterialKey(material)}
-                            value={`${material.name} ${material.productCode} ${material.unit}`}
-                            onSelect={() => {
-                              handleToggleMaterial(material)
-                              setIsMaterialPickerOpen(false)
-                            }}
-                            className={cn(
-                              "gap-3",
-                              isSelected && "bg-accent text-accent-foreground"
-                            )}
-                          >
-                            <Check
+                          return (
+                            <button
+                              key={getMaterialKey(material)}
+                              type="button"
+                              onClick={() => {
+                                handleToggleMaterial(material)
+                                setIsMaterialPickerOpen(false)
+                                setMaterialSearch("")
+                              }}
                               className={cn(
-                                "size-4",
-                                isSelected ? "opacity-100" : "opacity-0"
+                                "flex w-full items-start gap-3 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground",
+                                isSelected && "bg-accent text-accent-foreground"
                               )}
-                            />
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">{material.name}</p>
-                              <p className="text-muted-foreground truncate text-xs">
-                                {material.productCode} • {material.unit}
-                              </p>
-                            </div>
-                          </CommandItem>
-                        )
-                      })}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
+                            >
+                              <Check
+                                className={cn(
+                                  "mt-0.5 size-4 shrink-0",
+                                  isSelected ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium">{material.name}</p>
+                                <p className="text-muted-foreground truncate text-xs">
+                                  {material.productCode} • {material.unit}
+                                </p>
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {hasMoreMaterialResults ? (
+                      <p className="text-muted-foreground px-3 pb-2 pt-3 text-xs">
+                        Showing the first {visibleMaterials.length} matches. Keep typing to narrow the list.
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               )}
             </div>
           </div>
+          {materialError ? (
+            <p className="text-sm text-rose-600">{materialError}</p>
+          ) : isLoadingMaterials ? (
+            <p className="text-muted-foreground text-sm">Loading material list...</p>
+          ) : null}
 
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
@@ -345,11 +379,11 @@ export function RequestBuilder({
         <div className="space-y-2">
           <Label htmlFor="request-notes" className="gap-1.5">
             <FileText className="text-accent-foreground size-4" />
-            Notes
+            Notes (optional)
           </Label>
           <Textarea
             id="request-notes"
-            placeholder="Optional notes for the warehouse team"
+            placeholder="Add notes"
             className="min-h-24 resize-y"
             value={notes}
             onChange={(event) => onNotesChange(event.target.value)}

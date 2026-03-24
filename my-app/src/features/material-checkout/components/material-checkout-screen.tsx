@@ -4,17 +4,16 @@ import { RotateCcw, Warehouse } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 
+import { fetchMaterials } from "../data/materials"
 import { fetchTechnicianEmail, fetchTechnicians } from "../data/technicians"
-import { mockMaterials } from "../mock-data"
 import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type MaterialSubmissionReceipt, type Technician } from "../types"
 import { RequestSummary } from "./request-summary"
 import { RequestBuilder } from "./request-builder"
 import { SubmissionSuccessDialog } from "./submission-success-dialog"
 
-function formatSubmissionTime(date: Date) {
+function formatSubmissionDate(date: Date) {
   return new Intl.DateTimeFormat("en-CA", {
     dateStyle: "medium",
-    timeStyle: "short",
   }).format(date)
 }
 
@@ -28,6 +27,10 @@ export function MaterialCheckoutScreen() {
   const techniciansQuery = useQuery({
     queryKey: ["technicians"],
     queryFn: fetchTechnicians,
+  })
+  const materialsQuery = useQuery({
+    queryKey: ["materials"],
+    queryFn: fetchMaterials,
   })
   const technicianEmailQuery = useQuery({
     queryKey: ["technician-email", selectedTechnician?.bponum],
@@ -83,7 +86,7 @@ export function MaterialCheckoutScreen() {
       technicianEmail: technicianEmailQuery.data ?? null,
       lines: requestLines,
       notes,
-      submittedAt: formatSubmissionTime(new Date()),
+      submittedAt: formatSubmissionDate(new Date()),
     })
     setIsSuccessOpen(true)
     setSelectedTechnician(null)
@@ -115,7 +118,7 @@ export function MaterialCheckoutScreen() {
                     Material Checkout
                   </h1>
                   <p className="text-muted-foreground text-sm">
-                    Live technician data with mock materials for active UI development
+                    Warehouse kiosk request form
                   </p>
                 </div>
               </div>
@@ -134,12 +137,14 @@ export function MaterialCheckoutScreen() {
             <div className="grid gap-4">
               <RequestBuilder
                 technicians={techniciansQuery.data ?? []}
-                materials={mockMaterials}
+                materials={materialsQuery.data ?? []}
                 selectedTechnician={selectedTechnician}
                 notes={notes}
                 resetVersion={resetVersion}
                 isLoadingTechnicians={techniciansQuery.isLoading}
                 technicianError={techniciansQuery.isError ? "Could not load technicians right now." : null}
+                isLoadingMaterials={materialsQuery.isLoading}
+                materialError={materialsQuery.isError ? "Could not load materials right now." : null}
                 onSelectTechnician={setSelectedTechnician}
                 onNotesChange={setNotes}
                 onAddMaterials={handleAddMaterials}

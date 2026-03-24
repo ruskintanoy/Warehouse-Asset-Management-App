@@ -1,4 +1,4 @@
-import { Box, ClipboardList, Mail, Minus, Plus, Trash2, UserRound } from "lucide-react"
+import { Box, ClipboardList, Mail, Minus, Plus, Trash2, Truck, UserRound } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -58,14 +58,15 @@ export function RequestSummary({
                   <p className="truncate text-base font-semibold text-slate-950">
                     {selectedTechnician.bponum}
                   </p>
-                  <p className="text-muted-foreground truncate text-xs">
-                    {selectedTechnician.stage}
-                  </p>
+                  <div className="text-muted-foreground mt-0.5 inline-flex max-w-full items-center gap-1.5 text-xs">
+                    <Truck className="size-3.5 shrink-0" />
+                    <span className="truncate">{selectedTechnician.stage}</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-0.5 sm:justify-self-end">
-                <div className="inline-flex max-w-full items-center gap-2 text-sm font-medium text-slate-800">
+              <div className="pt-0.5 sm:justify-self-end sm:pr-0.5">
+                <div className="inline-flex max-w-full items-center gap-2 text-base font-semibold text-slate-950">
                   <Mail className="size-3.5 shrink-0 text-slate-500" />
                   <span className="truncate">
                     {isLoadingTechnicianEmail
