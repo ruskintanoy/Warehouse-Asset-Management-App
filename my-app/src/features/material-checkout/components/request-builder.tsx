@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { FileText, ListRestart, Minus, PackageCheck, PackageSearch, Plus, Search, UserRound, X } from "lucide-react"
+import { Box, FileText, Minus, PackageCheck, PackageSearch, Plus, RotateCcw, Search, UserRound, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -101,7 +101,7 @@ export function RequestBuilder({
   }
 
   return (
-    <Card className="bg-white shadow-md shadow-black/5">
+    <Card className="bg-card border shadow-sm">
       <CardHeader className="gap-1 px-4 py-4 sm:px-5">
         <CardTitle className="text-xl">Request Details</CardTitle>
         <CardDescription>
@@ -111,7 +111,7 @@ export function RequestBuilder({
       <CardContent className="space-y-5 px-4 pb-4 sm:px-5">
         <div className="space-y-2">
           <Label htmlFor="technician-picker" className="gap-1.5">
-            <UserRound className="text-muted-foreground size-4" />
+            <UserRound className="text-accent-foreground size-4" />
             Technician
           </Label>
           <div id="technician-picker">
@@ -142,7 +142,7 @@ export function RequestBuilder({
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
               <Label htmlFor="material-search" className="gap-1.5">
-                <PackageSearch className="text-muted-foreground size-4" />
+                <PackageSearch className="text-accent-foreground size-4" />
                 Materials
               </Label>
               <Button
@@ -157,7 +157,7 @@ export function RequestBuilder({
                 disabled={searchTerm === "" && draftMaterials.length === 0}
                 aria-label="Reset material selection"
               >
-                <ListRestart className="size-4" />
+                <RotateCcw className="size-4" />
               </Button>
             </div>
             <div className="relative">
@@ -182,8 +182,8 @@ export function RequestBuilder({
                   type="button"
                   className={`rounded-lg border px-3 py-2 text-left transition ${
                     isSelected
-                      ? "border-foreground/20 bg-accent shadow-sm"
-                      : "bg-white hover:border-foreground/20"
+                      ? "border-accent-foreground/20 bg-accent shadow-sm"
+                      : "bg-white hover:border-accent-foreground/20"
                   }`}
                   onClick={() => handleToggleMaterial(material)}
                 >
@@ -208,7 +208,7 @@ export function RequestBuilder({
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
               <Label className="gap-1.5">
-                <PackageCheck className="text-muted-foreground size-4" />
+                <PackageCheck className="text-accent-foreground size-4" />
                 Selected Materials
               </Label>
               <span className="text-muted-foreground text-xs">
@@ -217,8 +217,9 @@ export function RequestBuilder({
             </div>
 
             {draftMaterials.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-3 py-5 text-sm text-slate-500">
-                Select one or more materials above.
+              <div className="text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/40 px-3 py-6 text-center text-sm">
+                <Box className="mb-2 size-6" />
+                <p>No materials selected yet.</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -301,7 +302,7 @@ export function RequestBuilder({
 
         <div className="space-y-2">
           <Label htmlFor="request-notes" className="gap-1.5">
-            <FileText className="text-muted-foreground size-4" />
+            <FileText className="text-accent-foreground size-4" />
             Notes
           </Label>
           <Textarea

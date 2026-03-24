@@ -91,12 +91,12 @@ export function MaterialCheckoutScreen() {
 
   return (
     <>
-      <div className="min-h-full bg-[linear-gradient(180deg,_#f8fafc_0%,_#eef2f7_100%)] px-3 py-4 sm:px-4 sm:py-5 lg:px-6">
+      <div className="min-h-full bg-[linear-gradient(180deg,_#f6f7f9_0%,_#eef1f5_100%)] px-3 py-4 sm:px-4 sm:py-5 lg:px-6">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
-          <Card className="bg-white shadow-md shadow-black/5">
+          <Card className="bg-card border shadow-sm">
             <CardContent className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-slate-950 text-white">
+                <div className="bg-accent text-accent-foreground flex size-10 items-center justify-center rounded-xl border">
                   <Warehouse className="size-5" />
                 </div>
                 <div>
@@ -110,7 +110,7 @@ export function MaterialCheckoutScreen() {
               </div>
               <button
                 type="button"
-                className="text-muted-foreground inline-flex h-9 items-center gap-2 rounded-md px-2.5 text-sm font-medium transition hover:bg-slate-100 hover:text-slate-950"
+                className="text-muted-foreground inline-flex h-9 items-center gap-2 rounded-md px-2.5 text-sm font-medium transition hover:bg-muted hover:text-foreground"
                 onClick={handleResetPage}
               >
                 <RotateCcw className="size-4" />

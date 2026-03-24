@@ -25,10 +25,10 @@ export function RequestSummary({
   const canSubmit = Boolean(selectedTechnician) && lines.length > 0
 
   return (
-    <Card className="bg-white shadow-md shadow-black/5">
+    <Card className="bg-card border shadow-sm">
       <CardHeader className="gap-2 px-4 py-3 sm:px-5">
         <div className="flex items-center gap-2">
-          <div className="bg-muted text-muted-foreground flex size-8 items-center justify-center rounded-lg">
+          <div className="bg-accent text-accent-foreground flex size-8 items-center justify-center rounded-lg">
             <ClipboardList className="size-4.5" />
           </div>
           <div>
