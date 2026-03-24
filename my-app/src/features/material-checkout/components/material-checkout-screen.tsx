@@ -4,12 +4,7 @@ import { RotateCcw, Warehouse } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 
 import { mockMaterials, mockTechnicians } from "../mock-data"
-import type {
-  MaterialRecord,
-  MaterialRequestLine,
-  MaterialSubmissionReceipt,
-  Technician,
-} from "../types"
+import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type MaterialSubmissionReceipt, type Technician } from "../types"
 import { RequestSummary } from "./request-summary"
 import { RequestBuilder } from "./request-builder"
 import { SubmissionSuccessDialog } from "./submission-success-dialog"
@@ -31,14 +26,16 @@ export function MaterialCheckoutScreen() {
 
   function handleAddMaterial(material: MaterialRecord, quantity: number) {
     setRequestLines((currentLines) => {
-      const existingLine = currentLines.find((line) => line.id === material.id)
+      const existingLine = currentLines.find(
+        (line) => getMaterialKey(line) === getMaterialKey(material)
+      )
 
       if (!existingLine) {
         return [...currentLines, { ...material, quantity }]
       }
 
       return currentLines.map((line) =>
-        line.id === material.id
+        getMaterialKey(line) === getMaterialKey(material)
           ? { ...line, quantity: line.quantity + quantity }
           : line
       )
@@ -51,16 +48,18 @@ export function MaterialCheckoutScreen() {
     })
   }
 
-  function handleAdjustQuantity(materialId: number, nextQuantity: number) {
+  function handleAdjustQuantity(materialKey: string, nextQuantity: number) {
     setRequestLines((currentLines) =>
       currentLines.map((line) =>
-        line.id === materialId ? { ...line, quantity: nextQuantity } : line
+        getMaterialKey(line) === materialKey ? { ...line, quantity: nextQuantity } : line
       )
     )
   }
 
-  function handleRemoveLine(materialId: number) {
-    setRequestLines((currentLines) => currentLines.filter((line) => line.id !== materialId))
+  function handleRemoveLine(materialKey: string) {
+    setRequestLines((currentLines) =>
+      currentLines.filter((line) => getMaterialKey(line) !== materialKey)
+    )
   }
 
   function handleSubmit() {

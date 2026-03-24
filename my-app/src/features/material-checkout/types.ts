@@ -21,3 +21,7 @@ export type MaterialSubmissionReceipt = {
   notes: string
   submittedAt: string
 }
+
+export function getMaterialKey(material: Pick<MaterialRecord, "id" | "name" | "productCode">) {
+  return `${material.id}::${material.productCode}::${material.name}`
+}

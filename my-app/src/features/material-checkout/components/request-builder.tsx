@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Box, Check, ChevronDown, FileText, Minus, PackageCheck, Plus, RotateCcw, UserRound, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -13,12 +13,11 @@ import {
 } from "@/components/ui/command"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
 import { SearchableSelect } from "./searchable-select"
-import type { MaterialRecord, MaterialRequestLine, Technician } from "../types"
+import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type Technician } from "../types"
 
 type RequestBuilderProps = {
   technicians: Technician[]
@@ -43,18 +42,28 @@ export function RequestBuilder({
 }: RequestBuilderProps) {
   const [isMaterialPickerOpen, setIsMaterialPickerOpen] = useState(false)
   const [draftMaterials, setDraftMaterials] = useState<MaterialRequestLine[]>([])
+  const materialPanelRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setIsMaterialPickerOpen(false)
     setDraftMaterials([])
   }, [resetVersion])
 
+  useEffect(() => {
+    if (!isMaterialPickerOpen || !materialPanelRef.current) {
+      return
+    }
+
+    materialPanelRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" })
+  }, [isMaterialPickerOpen])
+
   function handleToggleMaterial(material: MaterialRecord) {
     setDraftMaterials((currentDrafts) => {
-      const exists = currentDrafts.some((draft) => draft.id === material.id)
+      const materialKey = getMaterialKey(material)
+      const exists = currentDrafts.some((draft) => getMaterialKey(draft) === materialKey)
 
       if (exists) {
-        return currentDrafts.filter((draft) => draft.id !== material.id)
+        return currentDrafts.filter((draft) => getMaterialKey(draft) !== materialKey)
       }
 
       return [...currentDrafts, { ...material, quantity: 1 }]
@@ -64,7 +73,7 @@ export function RequestBuilder({
   function handleAdjustDraftQuantity(materialId: number, nextQuantity: number) {
     setDraftMaterials((currentDrafts) =>
       currentDrafts.map((draft) =>
-        draft.id === materialId
+        getMaterialKey(draft) === materialId
           ? { ...draft, quantity: Math.max(1, nextQuantity) }
           : draft
       )
@@ -76,7 +85,7 @@ export function RequestBuilder({
 
     setDraftMaterials((currentDrafts) =>
       currentDrafts.map((draft) =>
-        draft.id === materialId
+        getMaterialKey(draft) === materialId
           ? {
               ...draft,
               quantity: Number.isFinite(numericValue) && numericValue > 0 ? numericValue : 1,
@@ -156,43 +165,50 @@ export function RequestBuilder({
                 <RotateCcw className="size-4" />
               </Button>
             </div>
-            <Popover open={isMaterialPickerOpen} onOpenChange={setIsMaterialPickerOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  id="material-search"
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={isMaterialPickerOpen}
-                  className="h-auto min-h-10 w-full justify-between px-3 py-2.5 text-left"
-                >
-                  <span className="min-w-0 flex-1">
-                    {draftMaterials.length > 0 ? (
-                      <span className="text-sm font-medium">
-                        {draftMaterials.length} material{draftMaterials.length === 1 ? "" : "s"} selected
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        Search and select materials
-                      </span>
-                    )}
-                  </span>
-                  <ChevronDown className="text-muted-foreground ml-3 size-4 shrink-0" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+            <div className="space-y-2">
+              <Button
+                id="material-search"
+                type="button"
+                variant="outline"
+                role="combobox"
+                aria-expanded={isMaterialPickerOpen}
+                className="h-auto min-h-10 w-full justify-between px-3 py-2.5 text-left"
+                onClick={() => setIsMaterialPickerOpen((currentOpen) => !currentOpen)}
+              >
+                <span className="min-w-0 flex-1">
+                  {draftMaterials.length > 0 ? (
+                    <span className="text-sm font-medium">
+                      {draftMaterials.length} material{draftMaterials.length === 1 ? "" : "s"} selected
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      Search and select materials
+                    </span>
+                  )}
+                </span>
+                <ChevronDown className="text-muted-foreground ml-3 size-4 shrink-0" />
+              </Button>
+
+              {isMaterialPickerOpen && (
+                <div ref={materialPanelRef} className="rounded-md border bg-popover shadow-sm">
                 <Command>
-                  <CommandInput placeholder="Search material name, product code, or unit..." />
+                  <CommandInput autoFocus placeholder="Search material name, product code, or unit..." />
                   <CommandList>
                     <CommandEmpty>No materials match that search.</CommandEmpty>
                     <CommandGroup>
                       {materials.map((material) => {
-                        const isSelected = draftMaterials.some((draft) => draft.id === material.id)
+                        const isSelected = draftMaterials.some(
+                          (draft) => getMaterialKey(draft) === getMaterialKey(material)
+                        )
 
                         return (
                           <CommandItem
-                            key={material.id}
+                            key={getMaterialKey(material)}
                             value={`${material.name} ${material.productCode} ${material.unit}`}
-                            onSelect={() => handleToggleMaterial(material)}
+                            onSelect={() => {
+                              handleToggleMaterial(material)
+                              setIsMaterialPickerOpen(false)
+                            }}
                             className={cn(
                               "gap-3",
                               isSelected && "bg-accent text-accent-foreground"
@@ -216,8 +232,9 @@ export function RequestBuilder({
                     </CommandGroup>
                   </CommandList>
                 </Command>
-              </PopoverContent>
-            </Popover>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -237,10 +254,10 @@ export function RequestBuilder({
                 <p>No materials selected yet.</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
                 {draftMaterials.map((material) => (
                   <div
-                    key={material.id}
+                    key={getMaterialKey(material)}
                     className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg border bg-white px-2.5 py-2"
                   >
                     <div className="min-w-0">
@@ -259,7 +276,7 @@ export function RequestBuilder({
                         size="icon-sm"
                         className="h-8 w-8"
                         onClick={() =>
-                          handleAdjustDraftQuantity(material.id, material.quantity - 1)
+                          handleAdjustDraftQuantity(getMaterialKey(material), material.quantity - 1)
                         }
                         aria-label={`Decrease ${material.name} quantity`}
                       >
@@ -272,7 +289,7 @@ export function RequestBuilder({
                         className="hide-number-spin h-8 w-14 px-2 text-center text-sm"
                         value={material.quantity}
                         onChange={(event) =>
-                          handleDraftQuantityInput(material.id, event.target.value)
+                          handleDraftQuantityInput(getMaterialKey(material), event.target.value)
                         }
                         aria-label={`${material.name} quantity`}
                       />
@@ -282,7 +299,7 @@ export function RequestBuilder({
                         size="icon-sm"
                         className="h-8 w-8"
                         onClick={() =>
-                          handleAdjustDraftQuantity(material.id, material.quantity + 1)
+                          handleAdjustDraftQuantity(getMaterialKey(material), material.quantity + 1)
                         }
                         aria-label={`Increase ${material.name} quantity`}
                       >

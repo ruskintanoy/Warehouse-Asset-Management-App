@@ -3,14 +3,14 @@ import { Box, ClipboardList, Minus, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
-import type { MaterialRequestLine, Technician } from "../types"
+import { getMaterialKey, type MaterialRequestLine, type Technician } from "../types"
 
 type RequestSummaryProps = {
   selectedTechnician: Technician | null
   lines: MaterialRequestLine[]
   notes: string
-  onAdjustQuantity: (materialId: number, nextQuantity: number) => void
-  onRemoveLine: (materialId: number) => void
+  onAdjustQuantity: (materialKey: string, nextQuantity: number) => void
+  onRemoveLine: (materialKey: string) => void
   onSubmit: () => void
 }
 
@@ -63,56 +63,56 @@ export function RequestSummary({
               <p>No materials added yet.</p>
             </div>
           ) : (
-            lines.map((line) => (
+            <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+              {lines.map((line) => (
               <div
-                key={line.id}
-                className="rounded-lg border bg-muted/30 px-2.5 py-2"
+                key={getMaterialKey(line)}
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg border bg-muted/30 px-2.5 py-2"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-[rgb(74,50,31)]">{line.name}</p>
-                    <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2 text-xs">
-                      <span>{line.productCode}</span>
-                      <span>•</span>
-                      <span>{line.unit}</span>
-                    </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[rgb(74,50,31)]">{line.name}</p>
+                  <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2 text-xs">
+                    <span>{line.productCode}</span>
+                    <span>•</span>
+                    <span>{line.unit}</span>
                   </div>
                 </div>
 
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                     <Button
                       variant="outline"
                       size="icon-sm"
                       className="h-7 w-7 bg-white"
-                      onClick={() => onAdjustQuantity(line.id, Math.max(1, line.quantity - 1))}
+                      onClick={() =>
+                        onAdjustQuantity(getMaterialKey(line), Math.max(1, line.quantity - 1))
+                      }
                       aria-label={`Decrease ${line.name} quantity`}
                     >
-                      <Minus className="size-4" />
-                    </Button>
-                    <span className="w-6 text-center text-sm font-semibold">{line.quantity}</span>
+                        <Minus className="size-4" />
+                      </Button>
+                      <span className="w-6 text-center text-sm font-semibold">{line.quantity}</span>
                     <Button
                       variant="outline"
                       size="icon-sm"
                       className="h-7 w-7 bg-white"
-                      onClick={() => onAdjustQuantity(line.id, line.quantity + 1)}
+                      onClick={() => onAdjustQuantity(getMaterialKey(line), line.quantity + 1)}
                       aria-label={`Increase ${line.name} quantity`}
                     >
                       <Plus className="size-4" />
                     </Button>
-                  </div>
                   <Button
                     variant="ghost"
                     size="icon-sm"
                     className="h-7 w-7"
-                    onClick={() => onRemoveLine(line.id)}
+                    onClick={() => onRemoveLine(getMaterialKey(line))}
                     aria-label={`Remove ${line.name}`}
                   >
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
-              </div>
-            ))
+                </div>
+              ))}
+            </div>
           )}
         </div>
 

@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-import type { MaterialSubmissionReceipt } from "../types"
+import { getMaterialKey, type MaterialSubmissionReceipt } from "../types"
 
 type SubmissionSuccessDialogProps = {
   open: boolean
@@ -27,7 +27,7 @@ export function SubmissionSuccessDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader className="items-start gap-3 text-left">
           <div className="flex size-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 shadow-inner shadow-emerald-500/15">
             <CheckCircle2 className="size-7 animate-in zoom-in-75 duration-300" />
@@ -40,7 +40,7 @@ export function SubmissionSuccessDialog({
           </div>
         </DialogHeader>
 
-        <div className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="grid gap-2 sm:grid-cols-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
@@ -66,14 +66,14 @@ export function SubmissionSuccessDialog({
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
               Materials
             </p>
-            <div className="mt-3 space-y-3">
+            <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
               {receipt.lines.map((line) => (
                 <div
-                  key={line.id}
-                  className="flex items-start justify-between gap-4 rounded-xl border border-white bg-white p-4 shadow-sm"
+                  key={getMaterialKey(line)}
+                  className="flex items-start justify-between gap-3 rounded-xl border border-white bg-white px-3 py-2.5 shadow-sm"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-slate-950">{line.name}</p>
+                    <p className="text-sm font-medium text-slate-950">{line.name}</p>
                     <p className="text-sm text-slate-600">
                       {line.productCode} • {line.unit}
                     </p>

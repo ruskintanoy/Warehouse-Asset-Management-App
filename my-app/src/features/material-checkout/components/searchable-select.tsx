@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react"
+import { type ReactNode, useEffect, useRef, useState } from "react"
 import { Check, ChevronDown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
 type SearchableSelectProps<TItem> = {
@@ -37,31 +36,42 @@ export function SearchableSelect<TItem>({
   renderItem,
 }: SearchableSelectProps<TItem>) {
   const [open, setOpen] = useState(false)
+  const panelRef = useRef<HTMLDivElement | null>(null)
 
   const selectedItem = items.find((item) => getKey(item) === selectedKey)
 
+  useEffect(() => {
+    if (!open || !panelRef.current) {
+      return
+    }
+
+    panelRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" })
+  }, [open])
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="h-auto min-h-10 w-full justify-between px-3 py-2.5 text-left"
-        >
-          <span className="min-w-0 flex-1">
-            {selectedItem ? (
-              renderItem(selectedItem)
-            ) : (
-              <span className="text-muted-foreground">{placeholder}</span>
-            )}
-          </span>
-          <ChevronDown className="text-muted-foreground ml-3 size-4 shrink-0" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+    <div className="space-y-2">
+      <Button
+        type="button"
+        variant="outline"
+        role="combobox"
+        aria-expanded={open}
+        className="h-auto min-h-10 w-full justify-between px-3 py-2.5 text-left"
+        onClick={() => setOpen((currentOpen) => !currentOpen)}
+      >
+        <span className="min-w-0 flex-1">
+          {selectedItem ? (
+            renderItem(selectedItem)
+          ) : (
+            <span className="text-muted-foreground">{placeholder}</span>
+          )}
+        </span>
+        <ChevronDown className="text-muted-foreground ml-3 size-4 shrink-0" />
+      </Button>
+
+      {open && (
+        <div ref={panelRef} className="rounded-md border bg-popover shadow-sm">
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput autoFocus placeholder={searchPlaceholder} />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
@@ -90,7 +100,8 @@ export function SearchableSelect<TItem>({
             </CommandGroup>
           </CommandList>
         </Command>
-      </PopoverContent>
-    </Popover>
+        </div>
+      )}
+    </div>
   )
 }
