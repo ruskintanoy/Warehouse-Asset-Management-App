@@ -16,6 +16,7 @@ type SearchableSelectProps<TItem> = {
   items: TItem[]
   selectedKey?: string
   onSelect: (item: TItem) => void
+  disabled?: boolean
   placeholder: string
   searchPlaceholder: string
   emptyText: string
@@ -28,6 +29,7 @@ export function SearchableSelect<TItem>({
   items,
   selectedKey,
   onSelect,
+  disabled = false,
   placeholder,
   searchPlaceholder,
   emptyText,
@@ -55,8 +57,15 @@ export function SearchableSelect<TItem>({
         variant="outline"
         role="combobox"
         aria-expanded={open}
+        disabled={disabled}
         className="h-auto min-h-10 w-full justify-between px-3 py-2.5 text-left"
-        onClick={() => setOpen((currentOpen) => !currentOpen)}
+        onClick={() => {
+          if (disabled) {
+            return
+          }
+
+          setOpen((currentOpen) => !currentOpen)
+        }}
       >
         <span className="min-w-0 flex-1">
           {selectedItem ? (

@@ -1,9 +1,11 @@
 import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { RotateCcw, Warehouse } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 
-import { mockMaterials, mockTechnicians } from "../mock-data"
+import { fetchTechnicianEmail, fetchTechnicians } from "../data/technicians"
+import { mockMaterials } from "../mock-data"
 import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type MaterialSubmissionReceipt, type Technician } from "../types"
 import { RequestSummary } from "./request-summary"
 import { RequestBuilder } from "./request-builder"
@@ -23,6 +25,15 @@ export function MaterialCheckoutScreen() {
   const [receipt, setReceipt] = useState<MaterialSubmissionReceipt | null>(null)
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
   const [resetVersion, setResetVersion] = useState(0)
+  const techniciansQuery = useQuery({
+    queryKey: ["technicians"],
+    queryFn: fetchTechnicians,
+  })
+  const technicianEmailQuery = useQuery({
+    queryKey: ["technician-email", selectedTechnician?.bponum],
+    queryFn: () => fetchTechnicianEmail(selectedTechnician?.bponum ?? ""),
+    enabled: Boolean(selectedTechnician?.bponum),
+  })
 
   function handleAddMaterial(material: MaterialRecord, quantity: number) {
     setRequestLines((currentLines) => {
@@ -69,6 +80,7 @@ export function MaterialCheckoutScreen() {
 
     setReceipt({
       technician: selectedTechnician,
+      technicianEmail: technicianEmailQuery.data ?? null,
       lines: requestLines,
       notes,
       submittedAt: formatSubmissionTime(new Date()),
@@ -103,7 +115,7 @@ export function MaterialCheckoutScreen() {
                     Material Checkout
                   </h1>
                   <p className="text-muted-foreground text-sm">
-                    Mock data mode for kiosk layout development
+                    Live technician data with mock materials for active UI development
                   </p>
                 </div>
               </div>
@@ -121,11 +133,13 @@ export function MaterialCheckoutScreen() {
           <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
             <div className="grid gap-4">
               <RequestBuilder
-                technicians={mockTechnicians}
+                technicians={techniciansQuery.data ?? []}
                 materials={mockMaterials}
                 selectedTechnician={selectedTechnician}
                 notes={notes}
                 resetVersion={resetVersion}
+                isLoadingTechnicians={techniciansQuery.isLoading}
+                technicianError={techniciansQuery.isError ? "Could not load technicians right now." : null}
                 onSelectTechnician={setSelectedTechnician}
                 onNotesChange={setNotes}
                 onAddMaterials={handleAddMaterials}
@@ -134,6 +148,8 @@ export function MaterialCheckoutScreen() {
 
             <RequestSummary
               selectedTechnician={selectedTechnician}
+              technicianEmail={technicianEmailQuery.data ?? null}
+              isLoadingTechnicianEmail={technicianEmailQuery.isLoading}
               lines={requestLines}
               notes={notes}
               onAdjustQuantity={handleAdjustQuantity}

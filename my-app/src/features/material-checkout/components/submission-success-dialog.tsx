@@ -50,6 +50,9 @@ export function SubmissionSuccessDialog({
                 {receipt.technician.bponum}
               </p>
               <p className="text-sm text-slate-600">{receipt.technician.stage}</p>
+              <p className="text-sm text-slate-600">
+                {receipt.technicianEmail || "Email not found"}
+              </p>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">

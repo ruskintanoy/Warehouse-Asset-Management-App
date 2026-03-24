@@ -25,6 +25,8 @@ type RequestBuilderProps = {
   selectedTechnician: Technician | null
   notes: string
   resetVersion: number
+  isLoadingTechnicians?: boolean
+  technicianError?: string | null
   onSelectTechnician: (technician: Technician) => void
   onNotesChange: (notes: string) => void
   onAddMaterials: (materials: MaterialRequestLine[]) => void
@@ -36,6 +38,8 @@ export function RequestBuilder({
   selectedTechnician,
   notes,
   resetVersion,
+  isLoadingTechnicians = false,
+  technicianError,
   onSelectTechnician,
   onNotesChange,
   onAddMaterials,
@@ -124,9 +128,10 @@ export function RequestBuilder({
               items={technicians}
               selectedKey={selectedTechnician ? String(selectedTechnician.stageid) : undefined}
               onSelect={onSelectTechnician}
-              placeholder="Search by name or unit"
+              disabled={isLoadingTechnicians || Boolean(technicianError)}
+              placeholder={isLoadingTechnicians ? "Loading technicians..." : "Search by name or unit"}
               searchPlaceholder="Type a technician name or unit..."
-              emptyText="No technicians match that search."
+              emptyText={technicianError ?? "No technicians match that search."}
               getKey={(technician) => String(technician.stageid)}
               getSearchText={(technician) =>
                 `${technician.bponum} ${technician.stage}`.toLowerCase()
@@ -141,6 +146,11 @@ export function RequestBuilder({
               )}
             />
           </div>
+          {technicianError ? (
+            <p className="text-sm text-rose-600">{technicianError}</p>
+          ) : isLoadingTechnicians ? (
+            <p className="text-muted-foreground text-sm">Loading technician list...</p>
+          ) : null}
         </div>
 
         <div className="space-y-3">

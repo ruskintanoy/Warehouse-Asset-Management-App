@@ -7,6 +7,8 @@ import { getMaterialKey, type MaterialRequestLine, type Technician } from "../ty
 
 type RequestSummaryProps = {
   selectedTechnician: Technician | null
+  technicianEmail: string | null
+  isLoadingTechnicianEmail?: boolean
   lines: MaterialRequestLine[]
   notes: string
   onAdjustQuantity: (materialKey: string, nextQuantity: number) => void
@@ -16,6 +18,8 @@ type RequestSummaryProps = {
 
 export function RequestSummary({
   selectedTechnician,
+  technicianEmail,
+  isLoadingTechnicianEmail = false,
   lines,
   notes,
   onAdjustQuantity,
@@ -48,6 +52,11 @@ export function RequestSummary({
             <div className="mt-1.5">
               <p className="text-sm font-semibold">{selectedTechnician.bponum}</p>
               <p className="text-sm text-muted-foreground">{selectedTechnician.stage}</p>
+              <p className="text-sm text-muted-foreground">
+                {isLoadingTechnicianEmail
+                  ? "Looking up email..."
+                  : technicianEmail || "Email not found"}
+              </p>
             </div>
           ) : (
             <p className="mt-1.5 text-sm text-muted-foreground">

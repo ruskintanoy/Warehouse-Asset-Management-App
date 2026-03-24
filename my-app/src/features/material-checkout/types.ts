@@ -17,6 +17,7 @@ export type MaterialRequestLine = MaterialRecord & {
 
 export type MaterialSubmissionReceipt = {
   technician: Technician
+  technicianEmail: string | null
   lines: MaterialRequestLine[]
   notes: string
   submittedAt: string
