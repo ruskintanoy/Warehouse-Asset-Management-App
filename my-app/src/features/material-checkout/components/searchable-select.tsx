@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronDown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -56,7 +56,7 @@ export function SearchableSelect<TItem>({
               <span className="text-muted-foreground">{placeholder}</span>
             )}
           </span>
-          <ChevronsUpDown className="text-muted-foreground ml-3 size-4 shrink-0" />
+          <ChevronDown className="text-muted-foreground ml-3 size-4 shrink-0" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">

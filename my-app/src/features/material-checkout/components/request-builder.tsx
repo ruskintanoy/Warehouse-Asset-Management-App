@@ -1,11 +1,21 @@
-import { useEffect, useMemo, useState } from "react"
-import { Box, FileText, Minus, PackageCheck, PackageSearch, Plus, RotateCcw, Search, UserRound, X } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Box, Check, ChevronDown, FileText, Minus, PackageCheck, Plus, RotateCcw, UserRound, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 
 import { SearchableSelect } from "./searchable-select"
 import type { MaterialRecord, MaterialRequestLine, Technician } from "../types"
@@ -31,25 +41,11 @@ export function RequestBuilder({
   onNotesChange,
   onAddMaterials,
 }: RequestBuilderProps) {
-  const [searchTerm, setSearchTerm] = useState("")
+  const [isMaterialPickerOpen, setIsMaterialPickerOpen] = useState(false)
   const [draftMaterials, setDraftMaterials] = useState<MaterialRequestLine[]>([])
 
-  const filteredMaterials = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase()
-
-    if (!normalizedSearch) {
-      return materials
-    }
-
-    return materials.filter((material) =>
-      `${material.name} ${material.productCode} ${material.unit}`
-        .toLowerCase()
-        .includes(normalizedSearch)
-    )
-  }, [materials, searchTerm])
-
   useEffect(() => {
-    setSearchTerm("")
+    setIsMaterialPickerOpen(false)
     setDraftMaterials([])
   }, [resetVersion])
 
@@ -97,7 +93,7 @@ export function RequestBuilder({
 
     onAddMaterials(draftMaterials)
     setDraftMaterials([])
-    setSearchTerm("")
+    setIsMaterialPickerOpen(false)
   }
 
   return (
@@ -142,7 +138,7 @@ export function RequestBuilder({
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
               <Label htmlFor="material-search" className="gap-1.5">
-                <PackageSearch className="text-accent-foreground size-4" />
+                <Box className="text-accent-foreground size-4" />
                 Materials
               </Label>
               <Button
@@ -151,58 +147,77 @@ export function RequestBuilder({
                 size="icon-sm"
                 className="h-8 w-8"
                 onClick={() => {
-                  setSearchTerm("")
+                  setIsMaterialPickerOpen(false)
                   setDraftMaterials([])
                 }}
-                disabled={searchTerm === "" && draftMaterials.length === 0}
+                disabled={draftMaterials.length === 0}
                 aria-label="Reset material selection"
               >
                 <RotateCcw className="size-4" />
               </Button>
             </div>
-            <div className="relative">
-              <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-              <Input
-                id="material-search"
-                placeholder="Search material name, product code, or unit"
-                className="h-10 pl-9"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid max-h-64 gap-2 overflow-y-auto rounded-xl border bg-muted/60 p-2">
-            {filteredMaterials.map((material) => {
-              const isSelected = draftMaterials.some((draft) => draft.id === material.id)
-
-              return (
-                <button
-                  key={material.id}
-                  type="button"
-                  className={`rounded-lg border px-3 py-2 text-left transition ${
-                    isSelected
-                      ? "border-accent-foreground/20 bg-accent shadow-sm"
-                      : "bg-white hover:border-accent-foreground/20"
-                  }`}
-                  onClick={() => handleToggleMaterial(material)}
+            <Popover open={isMaterialPickerOpen} onOpenChange={setIsMaterialPickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  id="material-search"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={isMaterialPickerOpen}
+                  className="h-auto min-h-10 w-full justify-between px-3 py-2.5 text-left"
                 >
-                  <div className="min-w-0">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-950">{material.name}</p>
-                      <p className="text-muted-foreground truncate text-xs">
-                        {material.productCode} • {material.unit}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-            {filteredMaterials.length === 0 && (
-              <div className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-6 text-center text-sm text-slate-500">
-                No materials match that search.
-              </div>
-            )}
+                  <span className="min-w-0 flex-1">
+                    {draftMaterials.length > 0 ? (
+                      <span className="text-sm font-medium">
+                        {draftMaterials.length} material{draftMaterials.length === 1 ? "" : "s"} selected
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        Search and select materials
+                      </span>
+                    )}
+                  </span>
+                  <ChevronDown className="text-muted-foreground ml-3 size-4 shrink-0" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+                <Command>
+                  <CommandInput placeholder="Search material name, product code, or unit..." />
+                  <CommandList>
+                    <CommandEmpty>No materials match that search.</CommandEmpty>
+                    <CommandGroup>
+                      {materials.map((material) => {
+                        const isSelected = draftMaterials.some((draft) => draft.id === material.id)
+
+                        return (
+                          <CommandItem
+                            key={material.id}
+                            value={`${material.name} ${material.productCode} ${material.unit}`}
+                            onSelect={() => handleToggleMaterial(material)}
+                            className={cn(
+                              "gap-3",
+                              isSelected && "bg-accent text-accent-foreground"
+                            )}
+                          >
+                            <Check
+                              className={cn(
+                                "size-4",
+                                isSelected ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">{material.name}</p>
+                              <p className="text-muted-foreground truncate text-xs">
+                                {material.productCode} • {material.unit}
+                              </p>
+                            </div>
+                          </CommandItem>
+                        )
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">
@@ -308,7 +323,7 @@ export function RequestBuilder({
           <Textarea
             id="request-notes"
             placeholder="Optional notes for the warehouse team"
-            className="min-h-24 resize-none"
+            className="min-h-24 resize-y"
             value={notes}
             onChange={(event) => onNotesChange(event.target.value)}
           />
