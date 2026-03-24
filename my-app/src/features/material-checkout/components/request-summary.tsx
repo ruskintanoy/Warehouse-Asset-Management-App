@@ -78,7 +78,7 @@ export function RequestSummary({
             </div>
           ) : (
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Pick a technician to unlock submission.
+              Technician required.
             </p>
           )}
         </div>
