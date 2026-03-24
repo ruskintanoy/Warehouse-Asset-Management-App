@@ -70,22 +70,22 @@ export function RequestBuilder({
     })
   }
 
-  function handleAdjustDraftQuantity(materialId: number, nextQuantity: number) {
+  function handleAdjustDraftQuantity(materialKey: string, nextQuantity: number) {
     setDraftMaterials((currentDrafts) =>
       currentDrafts.map((draft) =>
-        getMaterialKey(draft) === materialId
+        getMaterialKey(draft) === materialKey
           ? { ...draft, quantity: Math.max(1, nextQuantity) }
           : draft
       )
     )
   }
 
-  function handleDraftQuantityInput(materialId: number, value: string) {
+  function handleDraftQuantityInput(materialKey: string, value: string) {
     const numericValue = Number(value)
 
     setDraftMaterials((currentDrafts) =>
       currentDrafts.map((draft) =>
-        getMaterialKey(draft) === materialId
+        getMaterialKey(draft) === materialKey
           ? {
               ...draft,
               quantity: Number.isFinite(numericValue) && numericValue > 0 ? numericValue : 1,
