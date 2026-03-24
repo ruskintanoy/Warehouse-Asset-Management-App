@@ -1,0 +1,23 @@
+export type Technician = {
+  stageid: number
+  stage: string
+  bponum: string
+}
+
+export type MaterialRecord = {
+  id: number
+  name: string
+  unit: string
+  productCode: string
+}
+
+export type MaterialRequestLine = MaterialRecord & {
+  quantity: number
+}
+
+export type MaterialSubmissionReceipt = {
+  technician: Technician
+  lines: MaterialRequestLine[]
+  notes: string
+  submittedAt: string
+}

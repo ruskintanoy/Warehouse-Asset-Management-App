@@ -1,0 +1,155 @@
+import { useState } from "react"
+import { RotateCcw, Warehouse } from "lucide-react"
+
+import { Card, CardContent } from "@/components/ui/card"
+
+import { mockMaterials, mockTechnicians } from "../mock-data"
+import type {
+  MaterialRecord,
+  MaterialRequestLine,
+  MaterialSubmissionReceipt,
+  Technician,
+} from "../types"
+import { RequestSummary } from "./request-summary"
+import { RequestBuilder } from "./request-builder"
+import { SubmissionSuccessDialog } from "./submission-success-dialog"
+
+function formatSubmissionTime(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date)
+}
+
+export function MaterialCheckoutScreen() {
+  const [selectedTechnician, setSelectedTechnician] = useState<Technician | null>(null)
+  const [requestLines, setRequestLines] = useState<MaterialRequestLine[]>([])
+  const [notes, setNotes] = useState("")
+  const [receipt, setReceipt] = useState<MaterialSubmissionReceipt | null>(null)
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false)
+  const [resetVersion, setResetVersion] = useState(0)
+
+  function handleAddMaterial(material: MaterialRecord, quantity: number) {
+    setRequestLines((currentLines) => {
+      const existingLine = currentLines.find((line) => line.id === material.id)
+
+      if (!existingLine) {
+        return [...currentLines, { ...material, quantity }]
+      }
+
+      return currentLines.map((line) =>
+        line.id === material.id
+          ? { ...line, quantity: line.quantity + quantity }
+          : line
+      )
+    })
+  }
+
+  function handleAddMaterials(materials: MaterialRequestLine[]) {
+    materials.forEach((material) => {
+      handleAddMaterial(material, material.quantity)
+    })
+  }
+
+  function handleAdjustQuantity(materialId: number, nextQuantity: number) {
+    setRequestLines((currentLines) =>
+      currentLines.map((line) =>
+        line.id === materialId ? { ...line, quantity: nextQuantity } : line
+      )
+    )
+  }
+
+  function handleRemoveLine(materialId: number) {
+    setRequestLines((currentLines) => currentLines.filter((line) => line.id !== materialId))
+  }
+
+  function handleSubmit() {
+    if (!selectedTechnician || requestLines.length === 0) {
+      return
+    }
+
+    setReceipt({
+      technician: selectedTechnician,
+      lines: requestLines,
+      notes,
+      submittedAt: formatSubmissionTime(new Date()),
+    })
+    setIsSuccessOpen(true)
+    setSelectedTechnician(null)
+    setRequestLines([])
+    setNotes("")
+  }
+
+  function handleResetPage() {
+    setSelectedTechnician(null)
+    setRequestLines([])
+    setNotes("")
+    setReceipt(null)
+    setIsSuccessOpen(false)
+    setResetVersion((currentVersion) => currentVersion + 1)
+  }
+
+  return (
+    <>
+      <div className="min-h-full bg-[linear-gradient(180deg,_#f8fafc_0%,_#eef2f7_100%)] px-3 py-4 sm:px-4 sm:py-5 lg:px-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
+          <Card className="bg-white shadow-md shadow-black/5">
+            <CardContent className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-slate-950 text-white">
+                  <Warehouse className="size-5" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
+                    Material Checkout
+                  </h1>
+                  <p className="text-muted-foreground text-sm">
+                    Mock data mode for kiosk layout development
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="text-muted-foreground inline-flex h-9 items-center gap-2 rounded-md px-2.5 text-sm font-medium transition hover:bg-slate-100 hover:text-slate-950"
+                onClick={handleResetPage}
+              >
+                <RotateCcw className="size-4" />
+                Start Over
+              </button>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+            <div className="grid gap-4">
+              <RequestBuilder
+                technicians={mockTechnicians}
+                materials={mockMaterials}
+                selectedTechnician={selectedTechnician}
+                notes={notes}
+                resetVersion={resetVersion}
+                onSelectTechnician={setSelectedTechnician}
+                onNotesChange={setNotes}
+                onAddMaterials={handleAddMaterials}
+              />
+            </div>
+
+            <RequestSummary
+              selectedTechnician={selectedTechnician}
+              lines={requestLines}
+              notes={notes}
+              onAdjustQuantity={handleAdjustQuantity}
+              onRemoveLine={handleRemoveLine}
+              onSubmit={handleSubmit}
+            />
+          </div>
+        </div>
+      </div>
+
+      <SubmissionSuccessDialog
+        open={isSuccessOpen}
+        receipt={receipt}
+        onOpenChange={setIsSuccessOpen}
+      />
+    </>
+  )
+}

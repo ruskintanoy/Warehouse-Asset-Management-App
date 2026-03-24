@@ -129,3 +129,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+.hide-number-spin {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.hide-number-spin::-webkit-inner-spin-button,
+.hide-number-spin::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
