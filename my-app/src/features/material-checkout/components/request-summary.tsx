@@ -1,4 +1,4 @@
-import { Box, ClipboardList, Minus, Plus, Trash2 } from "lucide-react"
+import { Box, ClipboardList, Mail, Minus, Plus, Trash2, UserRound } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -49,14 +49,31 @@ export function RequestSummary({
             Technician
           </p>
           {selectedTechnician ? (
-            <div className="mt-1.5">
-              <p className="text-sm font-semibold">{selectedTechnician.bponum}</p>
-              <p className="text-sm text-muted-foreground">{selectedTechnician.stage}</p>
-              <p className="text-sm text-muted-foreground">
-                {isLoadingTechnicianEmail
-                  ? "Looking up email..."
-                  : technicianEmail || "Email not found"}
-              </p>
+            <div className="mt-2 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+              <div className="flex items-start gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full border bg-white text-slate-600 shadow-sm">
+                  <UserRound className="size-4.5" />
+                </div>
+                <div className="min-w-0 pt-0.5">
+                  <p className="truncate text-base font-semibold text-slate-950">
+                    {selectedTechnician.bponum}
+                  </p>
+                  <p className="text-muted-foreground truncate text-xs">
+                    {selectedTechnician.stage}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-0.5 sm:justify-self-end">
+                <div className="inline-flex max-w-full items-center gap-2 text-sm font-medium text-slate-800">
+                  <Mail className="size-3.5 shrink-0 text-slate-500" />
+                  <span className="truncate">
+                    {isLoadingTechnicianEmail
+                      ? "Looking up email..."
+                      : technicianEmail || "Email not found"}
+                  </span>
+                </div>
+              </div>
             </div>
           ) : (
             <p className="mt-1.5 text-sm text-muted-foreground">
