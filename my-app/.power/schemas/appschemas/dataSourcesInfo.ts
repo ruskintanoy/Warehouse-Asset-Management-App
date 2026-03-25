@@ -718,19 +718,17 @@ export const dataSourcesInfo = {
       }
     }
   },
-  "material_desc": {
-    "tableId": "material_desc",
-    "version": "v2",
-    "primaryKey": "id",
-    "dataSourceType": "Connector",
-    "apis": {}
-  },
   "_2bffbcbd_8a13_4662_bdd2_838514e5c61c_sp": {
     "tableId": "",
     "version": "v2",
     "primaryKey": "",
     "dataSourceType": "Connector",
     "apis": {
+      "GetMaterialList": {
+        "path": "/dbo.GetMaterialList",
+        "method": "POST",
+        "parameters": []
+      },
       "GetTechList": {
         "path": "/dbo.GetTechList",
         "method": "POST",
