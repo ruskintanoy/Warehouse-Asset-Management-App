@@ -6,10 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { LoadingIndicator } from "@/components/ui/loading-indicator"
+import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type Technician } from "@/lib/material-checkout/types"
 import { cn } from "@/lib/utils"
 
 import { SearchableSelect } from "./searchable-select"
-import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type Technician } from "../types"
 
 type RequestBuilderProps = {
   technicians: Technician[]
@@ -137,7 +138,7 @@ export function RequestBuilder({
               selectedKey={selectedTechnician ? String(selectedTechnician.stageid) : undefined}
               onSelect={onSelectTechnician}
               disabled={isLoadingTechnicians || Boolean(technicianError)}
-              placeholder={isLoadingTechnicians ? "Loading technicians..." : "Search by name or unit"}
+              placeholder={isLoadingTechnicians ? <LoadingIndicator label="Loading technicians" /> : "Search by name or unit"}
               searchPlaceholder="Type a technician name or unit..."
               emptyText={technicianError ?? "No technicians match that search."}
               getKey={(technician) => String(technician.stageid)}
@@ -157,7 +158,7 @@ export function RequestBuilder({
           {technicianError ? (
             <p className="text-sm text-rose-600">{technicianError}</p>
           ) : isLoadingTechnicians ? (
-            <p className="text-muted-foreground text-sm">Loading technician list...</p>
+            <LoadingIndicator label="Loading technician list" />
           ) : null}
         </div>
 
@@ -203,7 +204,7 @@ export function RequestBuilder({
                   ) : (
                     <span className="text-muted-foreground">
                       {isLoadingMaterials
-                        ? "Loading materials..."
+                        ? <LoadingIndicator label="Loading materials" className="text-sm" />
                         : materialError || "Search and select materials"}
                     </span>
                   )}
@@ -278,7 +279,7 @@ export function RequestBuilder({
           {materialError ? (
             <p className="text-sm text-rose-600">{materialError}</p>
           ) : isLoadingMaterials ? (
-            <p className="text-muted-foreground text-sm">Loading material list...</p>
+            <LoadingIndicator label="Loading material list" />
           ) : null}
 
           <div className="space-y-2">

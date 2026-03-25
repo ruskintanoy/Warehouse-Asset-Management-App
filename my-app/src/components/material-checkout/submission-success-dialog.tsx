@@ -7,8 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-
-import { getMaterialKey, type MaterialSubmissionReceipt } from "../types"
+import { getMaterialKey, type MaterialSubmissionReceipt } from "@/lib/material-checkout/types"
 
 type SubmissionSuccessDialogProps = {
   open: boolean

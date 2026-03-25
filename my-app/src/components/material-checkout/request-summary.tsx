@@ -2,8 +2,8 @@ import { Box, ClipboardList, Mail, Minus, Plus, Trash2, Truck, UserRound } from 
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-
-import { getMaterialKey, type MaterialRequestLine, type Technician } from "../types"
+import { LoadingIndicator } from "@/components/ui/loading-indicator"
+import { getMaterialKey, type MaterialRequestLine, type Technician } from "@/lib/material-checkout/types"
 
 type RequestSummaryProps = {
   selectedTechnician: Technician | null
@@ -68,11 +68,11 @@ export function RequestSummary({
               <div className="pt-0.5 sm:justify-self-end sm:pr-0.5">
                 <div className="inline-flex max-w-full items-center gap-2 text-base font-semibold text-slate-950">
                   <Mail className="size-3.5 shrink-0 text-slate-500" />
-                  <span className="truncate">
-                    {isLoadingTechnicianEmail
-                      ? "Looking up email..."
-                      : technicianEmail || "Email not found"}
-                  </span>
+                  {isLoadingTechnicianEmail ? (
+                    <LoadingIndicator label="Loading email" className="text-base font-semibold text-slate-950" />
+                  ) : (
+                    <span className="truncate">{technicianEmail || "Email not found"}</span>
+                  )}
                 </div>
               </div>
             </div>

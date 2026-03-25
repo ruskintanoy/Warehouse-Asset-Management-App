@@ -1,7 +1,7 @@
 import { Material_descService } from "@/generated"
 import type { Material_desc } from "@/generated/models/Material_descModel"
 
-import type { MaterialRecord } from "../types"
+import type { MaterialRecord } from "./types"
 
 function toText(value: unknown) {
   return typeof value === "string" ? value.trim() : ""

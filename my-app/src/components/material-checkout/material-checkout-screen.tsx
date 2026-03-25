@@ -1,12 +1,12 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { RotateCcw, Warehouse } from "lucide-react"
+import { RotateCcw } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
+import { fetchMaterials } from "@/lib/material-checkout/materials"
+import { fetchTechnicianEmail, fetchTechnicians } from "@/lib/material-checkout/technicians"
+import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type MaterialSubmissionReceipt, type Technician } from "@/lib/material-checkout/types"
 
-import { fetchMaterials } from "../data/materials"
-import { fetchTechnicianEmail, fetchTechnicians } from "../data/technicians"
-import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type MaterialSubmissionReceipt, type Technician } from "../types"
 import { RequestSummary } from "./request-summary"
 import { RequestBuilder } from "./request-builder"
 import { SubmissionSuccessDialog } from "./submission-success-dialog"
@@ -108,11 +108,13 @@ export function MaterialCheckoutScreen() {
       <div className="min-h-full bg-[linear-gradient(180deg,_#f6f7f9_0%,_#eef1f5_100%)] px-3 py-4 sm:px-4 sm:py-5 lg:px-6">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
           <Card className="bg-card border shadow-sm">
-            <CardContent className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+            <CardContent className="flex items-center justify-between gap-3 px-4 py-1 sm:px-5">
               <div className="flex items-center gap-3">
-                <div className="bg-accent text-accent-foreground flex size-10 items-center justify-center rounded-xl border">
-                  <Warehouse className="size-5" />
-                </div>
+                <img
+                  src="/SPAAR Logo.png"
+                  alt="SPAAR logo"
+                  className="h-20 w-auto shrink-0 object-contain sm:h-15"
+                />
                 <div>
                   <h1 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
                     Material Checkout

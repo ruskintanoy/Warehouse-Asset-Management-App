@@ -1,4 +1,4 @@
-import { MaterialCheckoutScreen } from "@/features/material-checkout/components/material-checkout-screen"
+import { MaterialCheckoutScreen } from "@/components/material-checkout/material-checkout-screen"
 
 export default function HomePage() {
   return <MaterialCheckoutScreen />

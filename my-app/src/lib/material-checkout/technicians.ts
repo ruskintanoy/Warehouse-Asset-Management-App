@@ -1,7 +1,7 @@
 import { GetTechListService, Office365UsersService } from "@/generated"
 import type { User } from "@/generated/models/Office365UsersModel"
 
-import type { Technician } from "../types"
+import type { Technician } from "./types"
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null

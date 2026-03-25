@@ -17,7 +17,7 @@ type SearchableSelectProps<TItem> = {
   selectedKey?: string
   onSelect: (item: TItem) => void
   disabled?: boolean
-  placeholder: string
+  placeholder: ReactNode
   searchPlaceholder: string
   emptyText: string
   getKey: (item: TItem) => string

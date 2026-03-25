@@ -1,14 +1,14 @@
 {
   "version": "1.0",
   "appId": "782e9d3e-de74-4dd9-be08-4012082c6030",
-  "appDisplayName": "MaterialCheckoutApp",
+  "appDisplayName": "Material Checkout",
   "region": "prod",
   "environmentId": "Default-2aab162a-8795-408d-a78c-935636f18951",
   "description": "",
   "buildPath": "./dist",
   "buildEntryPoint": "index.html",
   "localAppUrl": "http://localhost:3000",
-  "logoPath": "Default",
+  "logoPath": "./public/app_logo.png",
   "connectionReferences": {
     "7859dccc-11c3-4f17-bd9f-50154e85fe99": {
       "id": "/providers/Microsoft.PowerApps/apis/shared_office365users",
