@@ -39,5 +39,19 @@
       }
     }
   },
-  "databaseReferences": {}
+  "databaseReferences": {
+    "default.cds": {
+      "dataSources": {
+        "materialrequests": {
+          "entitySetName": "spaar_materialrequests",
+          "logicalName": "spaar_materialrequest"
+        },
+        "materialrequestlines": {
+          "entitySetName": "spaar_materialrequestlines",
+          "logicalName": "spaar_materialrequestline"
+        }
+      },
+      "environmentVariableName": ""
+    }
+  }
 }
