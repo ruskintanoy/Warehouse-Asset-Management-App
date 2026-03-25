@@ -92,7 +92,7 @@ export function MaterialCheckoutScreen() {
     const technician = selectedTechnician
 
     try {
-      const result = await submitMutation.mutateAsync({
+      await submitMutation.mutateAsync({
         technician,
         technicianEmail,
         lines: submissionLines,
@@ -100,7 +100,6 @@ export function MaterialCheckoutScreen() {
       })
 
       setReceipt({
-        requestNumber: result.requestNumber,
         technician,
         technicianEmail,
         lines: submissionLines,
