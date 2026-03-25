@@ -8,12 +8,8 @@ export * as CommonModels from './models/CommonModels';
 export * as GetTechListModel from './models/GetTechListModel';
 export * as Material_descModel from './models/Material_descModel';
 export * as Office365UsersModel from './models/Office365UsersModel';
-export * as Spaar_materialrequestlinesModel from './models/Spaar_materialrequestlinesModel';
-export * as Spaar_materialrequestsModel from './models/Spaar_materialrequestsModel';
 
 // Services
 export * from './services/GetTechListService';
 export * from './services/Material_descService';
 export * from './services/Office365UsersService';
-export * from './services/Spaar_materialrequestlinesService';
-export * from './services/Spaar_materialrequestsService';
