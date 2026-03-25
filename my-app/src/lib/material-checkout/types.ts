@@ -16,6 +16,7 @@ export type MaterialRequestLine = MaterialRecord & {
 }
 
 export type MaterialSubmissionReceipt = {
+  requestNumber?: string
   technician: Technician
   technicianEmail: string | null
   lines: MaterialRequestLine[]

@@ -1,9 +1,10 @@
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery } from "@tanstack/react-query"
 import { RotateCcw } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { fetchMaterials } from "@/lib/material-checkout/materials"
+import { saveMaterialRequest } from "@/lib/material-checkout/submissions"
 import { fetchTechnicianEmail, fetchTechnicians } from "@/lib/material-checkout/technicians"
 import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type MaterialSubmissionReceipt, type Technician } from "@/lib/material-checkout/types"
 
@@ -36,6 +37,9 @@ export function MaterialCheckoutScreen() {
     queryKey: ["technician-email", selectedTechnician?.bponum],
     queryFn: () => fetchTechnicianEmail(selectedTechnician?.bponum ?? ""),
     enabled: Boolean(selectedTechnician?.bponum),
+  })
+  const submitMutation = useMutation({
+    mutationFn: saveMaterialRequest,
   })
 
   function handleAddMaterial(material: MaterialRecord, quantity: number) {
@@ -76,22 +80,40 @@ export function MaterialCheckoutScreen() {
     )
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!selectedTechnician || requestLines.length === 0) {
       return
     }
 
-    setReceipt({
-      technician: selectedTechnician,
-      technicianEmail: technicianEmailQuery.data ?? null,
-      lines: requestLines,
-      notes,
-      submittedAt: formatSubmissionDate(new Date()),
-    })
-    setIsSuccessOpen(true)
-    setSelectedTechnician(null)
-    setRequestLines([])
-    setNotes("")
+    const submissionDate = formatSubmissionDate(new Date())
+    const technicianEmail = technicianEmailQuery.data ?? null
+    const submissionLines = [...requestLines]
+    const submissionNotes = notes
+    const technician = selectedTechnician
+
+    try {
+      const result = await submitMutation.mutateAsync({
+        technician,
+        technicianEmail,
+        lines: submissionLines,
+        notes: submissionNotes,
+      })
+
+      setReceipt({
+        requestNumber: result.requestNumber,
+        technician,
+        technicianEmail,
+        lines: submissionLines,
+        notes: submissionNotes,
+        submittedAt: submissionDate,
+      })
+      setIsSuccessOpen(true)
+      setSelectedTechnician(null)
+      setRequestLines([])
+      setNotes("")
+    } catch {
+      // Error state is surfaced by the mutation and shown in the summary.
+    }
   }
 
   function handleResetPage() {
@@ -157,6 +179,8 @@ export function MaterialCheckoutScreen() {
               selectedTechnician={selectedTechnician}
               technicianEmail={technicianEmailQuery.data ?? null}
               isLoadingTechnicianEmail={technicianEmailQuery.isLoading}
+              submitError={submitMutation.isError ? "Unable to submit the material request. Please try again." : null}
+              isSubmitting={submitMutation.isPending}
               lines={requestLines}
               notes={notes}
               onAdjustQuantity={handleAdjustQuantity}

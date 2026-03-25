@@ -9,6 +9,8 @@ type RequestSummaryProps = {
   selectedTechnician: Technician | null
   technicianEmail: string | null
   isLoadingTechnicianEmail?: boolean
+  submitError?: string | null
+  isSubmitting?: boolean
   lines: MaterialRequestLine[]
   notes: string
   onAdjustQuantity: (materialKey: string, nextQuantity: number) => void
@@ -20,6 +22,8 @@ export function RequestSummary({
   selectedTechnician,
   technicianEmail,
   isLoadingTechnicianEmail = false,
+  submitError,
+  isSubmitting = false,
   lines,
   notes,
   onAdjustQuantity,
@@ -153,12 +157,15 @@ export function RequestSummary({
         </div>
       </CardContent>
       <CardFooter className="block px-4 pb-4 sm:px-5">
+        {submitError ? (
+          <p className="mb-3 text-sm text-rose-600">{submitError}</p>
+        ) : null}
         <Button
           className="h-10 w-full"
           onClick={onSubmit}
-          disabled={!canSubmit}
+          disabled={!canSubmit || isSubmitting}
         >
-          Submit Material Request
+          {isSubmitting ? "Submitting..." : "Submit Material Request"}
         </Button>
       </CardFooter>
     </Card>
