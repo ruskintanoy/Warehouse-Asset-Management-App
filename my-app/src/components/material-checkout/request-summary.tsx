@@ -71,7 +71,9 @@ export function RequestSummary({
 
               <div className="pt-0.5 sm:justify-self-end sm:pr-0.5">
                 <div className="inline-flex max-w-full items-center gap-2 text-base font-semibold text-slate-950">
-                  <Mail className="size-3.5 shrink-0 text-slate-500" />
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full border bg-white text-slate-600 shadow-sm">
+                    <Mail className="size-4.5" />
+                  </div>
                   {isLoadingTechnicianEmail ? (
                     <LoadingIndicator label="Loading email" className="text-base font-semibold text-slate-950" />
                   ) : (
@@ -165,7 +167,14 @@ export function RequestSummary({
           onClick={onSubmit}
           disabled={!canSubmit || isSubmitting}
         >
-          {isSubmitting ? "Submitting..." : "Submit Material Request"}
+          {isSubmitting ? (
+            <LoadingIndicator
+              label="Submitting request"
+              className="text-sm font-medium text-current [&_svg]:size-4"
+            />
+          ) : (
+            "Submit Material Request"
+          )}
         </Button>
       </CardFooter>
     </Card>

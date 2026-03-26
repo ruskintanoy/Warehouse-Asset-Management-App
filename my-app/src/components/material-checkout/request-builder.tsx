@@ -157,8 +157,6 @@ export function RequestBuilder({
           </div>
           {technicianError ? (
             <p className="text-sm text-rose-600">{technicianError}</p>
-          ) : isLoadingTechnicians ? (
-            <LoadingIndicator label="Loading technician list" />
           ) : null}
         </div>
 
@@ -278,8 +276,6 @@ export function RequestBuilder({
           </div>
           {materialError ? (
             <p className="text-sm text-rose-600">{materialError}</p>
-          ) : isLoadingMaterials ? (
-            <LoadingIndicator label="Loading material list" />
           ) : null}
 
           <div className="space-y-2">
