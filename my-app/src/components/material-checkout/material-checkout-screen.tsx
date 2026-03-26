@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { RotateCcw } from "lucide-react"
 
+import spaarLogo from "@/assets/spaar-logo.png?inline"
 import { Card, CardContent } from "@/components/ui/card"
 import { fetchMaterials } from "@/lib/material-checkout/materials"
 import { saveMaterialRequest } from "@/lib/material-checkout/submissions"
@@ -132,7 +133,7 @@ export function MaterialCheckoutScreen() {
             <CardContent className="flex items-center justify-between gap-3 px-4 py-1 sm:px-5">
               <div className="flex items-center gap-3">
                 <img
-                  src="/SPAAR Logo.png"
+                  src={spaarLogo}
                   alt="SPAAR logo"
                   className="h-20 w-auto shrink-0 object-contain sm:h-15"
                 />
