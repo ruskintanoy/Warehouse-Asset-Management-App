@@ -154,7 +154,7 @@ export function RequestSummary({
             Notes
           </p>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            {notes.trim() ? notes : "No notes added for this request."}
+            {notes.trim() ? notes : "N/A"}
           </p>
         </div>
       </CardContent>
