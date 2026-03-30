@@ -1,12 +1,6 @@
-import {
-  Spaar_materialrequestlinesService,
-  Spaar_materialrequestsService,
-} from "@/generated"
+import { Spaar_materialrequestlinesService, Spaar_materialrequestsService, } from "@/generated"
 import type { Spaar_materialrequestlinesBase } from "@/generated/models/Spaar_materialrequestlinesModel"
-import type {
-  Spaar_materialrequestsBase,
-  Spaar_materialrequestsspaar_status,
-} from "@/generated/models/Spaar_materialrequestsModel"
+import type { Spaar_materialrequestsBase, Spaar_materialrequestsspaar_status, } from "@/generated/models/Spaar_materialrequestsModel"
 
 import type { MaterialRequestLine, Technician } from "./types"
 
