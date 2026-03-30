@@ -1,14 +1,12 @@
 import { useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { RotateCcw } from "lucide-react"
-
 import spaarLogo from "@/assets/spaar-logo.png?inline"
 import { Card, CardContent } from "@/components/ui/card"
 import { fetchMaterials } from "@/lib/material-checkout/materials"
 import { saveMaterialRequest } from "@/lib/material-checkout/submissions"
 import { fetchTechnicianEmail, fetchTechnicians } from "@/lib/material-checkout/technicians"
 import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type MaterialSubmissionReceipt, type Technician } from "@/lib/material-checkout/types"
-
 import { RequestSummary } from "./request-summary"
 import { RequestBuilder } from "./request-builder"
 import { SubmissionSuccessDialog } from "./submission-success-dialog"

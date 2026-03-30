@@ -1,15 +1,7 @@
 import { type ReactNode, useEffect, useRef, useState } from "react"
 import { Check, ChevronDown } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
+import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
 
 type SearchableSelectProps<TItem> = {
