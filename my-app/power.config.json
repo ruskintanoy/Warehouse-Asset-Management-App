@@ -17,6 +17,22 @@
         "office365users"
       ],
       "dataSets": {}
+    },
+    "fde4e2e0-0fd3-4be6-9615-6ee3a4ce75a1": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_sql",
+      "displayName": "SQL Server",
+      "dataSources": [
+        "gettechlist"
+      ],
+      "authenticationType": "windowsAuthentication",
+      "sharedConnectionId": "/providers/Microsoft.PowerApps/apis/shared_sql/connections/f83a71abe6c949eaa20886e6e938118d",
+      "dataSets": {
+        "prosql03,onetrac": {
+          "dataSources": {
+            "gettechlist": {}
+          }
+        }
+      }
     }
   },
   "databaseReferences": {}

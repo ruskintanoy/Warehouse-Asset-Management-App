@@ -718,6 +718,19 @@ export const dataSourcesInfo = {
       }
     }
   },
+  "gettechlist": {
+    "tableId": "",
+    "version": "v2",
+    "primaryKey": "",
+    "dataSourceType": "Connector",
+    "apis": {
+      "GetTechList": {
+        "path": "/dbo.GetTechList",
+        "method": "POST",
+        "parameters": []
+      }
+    }
+  },
   "_2bffbcbd_8a13_4662_bdd2_838514e5c61c_sp": {
     "tableId": "",
     "version": "v2",

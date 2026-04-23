@@ -9,7 +9,7 @@ import { getClient } from '@microsoft/power-apps/data';
 import type { GetTechListRequest, GetTechListResponse } from '../models/GetTechListModel';
 
 export class GetTechListService {
-  private static readonly dataSourceName = '_2bffbcbd_8a13_4662_bdd2_838514e5c61c_sp';
+  private static readonly dataSourceName = 'gettechlist';
 
   private static readonly client = getClient(dataSourcesInfo);
 
