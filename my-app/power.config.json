@@ -17,37 +17,7 @@
         "office365users"
       ],
       "dataSets": {}
-    },
-    "2bffbcbd-8a13-4662-bdd2-838514e5c61c": {
-      "id": "/providers/Microsoft.PowerApps/apis/shared_sql",
-      "displayName": "SQL Server",
-      "dataSources": [
-        "_2bffbcbd_8a13_4662_bdd2_838514e5c61c_sp"
-      ],
-      "authenticationType": "windowsAuthentication",
-      "sharedConnectionId": "/providers/Microsoft.PowerApps/apis/shared_sql/connections/f83a71abe6c949eaa20886e6e938118d",
-      "dataSets": {
-        "prosql03,onetrac": {
-          "dataSources": {
-            "_2bffbcbd_8a13_4662_bdd2_838514e5c61c_sp": {}
-          }
-        }
-      }
     }
   },
-  "databaseReferences": {
-    "default.cds": {
-      "dataSources": {
-        "materialrequests": {
-          "entitySetName": "spaar_materialrequests",
-          "logicalName": "spaar_materialrequest"
-        },
-        "materialrequestlines": {
-          "entitySetName": "spaar_materialrequestlines",
-          "logicalName": "spaar_materialrequestline"
-        }
-      },
-      "environmentVariableName": ""
-    }
-  }
+  "databaseReferences": {}
 }

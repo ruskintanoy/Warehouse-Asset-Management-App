@@ -6,19 +6,21 @@
 import { dataSourcesInfo } from '../../../.power/schemas/appschemas/dataSourcesInfo';
 import type { IOperationResult } from '@microsoft/power-apps/data';
 import { getClient } from '@microsoft/power-apps/data';
-import type { GetTechListResponse } from '../models/GetTechListModel';
+import type { GetTechListRequest, GetTechListResponse } from '../models/GetTechListModel';
 
 export class GetTechListService {
   private static readonly dataSourceName = '_2bffbcbd_8a13_4662_bdd2_838514e5c61c_sp';
 
   private static readonly client = getClient(dataSourcesInfo);
 
-  public static async GetTechList(): Promise<IOperationResult<GetTechListResponse>> {
-    const result = await GetTechListService.client.executeAsync<void, GetTechListResponse>(
+  public static async GetTechList(inputParameters: GetTechListRequest): Promise<IOperationResult<GetTechListResponse>> {
+    const params: { inputParameters: GetTechListRequest } = { inputParameters };
+    const result = await GetTechListService.client.executeAsync<{ inputParameters: GetTechListRequest }, GetTechListResponse>(
       {
         connectorOperation: {
           tableName: GetTechListService.dataSourceName,
           operationName: 'GetTechList',
+          parameters: params
         },
       });
     return result;

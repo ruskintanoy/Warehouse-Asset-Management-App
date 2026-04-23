@@ -6,19 +6,21 @@
 import { dataSourcesInfo } from '../../../.power/schemas/appschemas/dataSourcesInfo';
 import type { IOperationResult } from '@microsoft/power-apps/data';
 import { getClient } from '@microsoft/power-apps/data';
-import type { GetMaterialListResponse } from '../models/GetMaterialListModel';
+import type { GetMaterialListRequest, GetMaterialListResponse } from '../models/GetMaterialListModel';
 
 export class GetMaterialListService {
   private static readonly dataSourceName = '_2bffbcbd_8a13_4662_bdd2_838514e5c61c_sp';
 
   private static readonly client = getClient(dataSourcesInfo);
 
-  public static async GetMaterialList(): Promise<IOperationResult<GetMaterialListResponse>> {
-    const result = await GetMaterialListService.client.executeAsync<void, GetMaterialListResponse>(
+  public static async GetMaterialList(inputParameters: GetMaterialListRequest): Promise<IOperationResult<GetMaterialListResponse>> {
+    const params: { inputParameters: GetMaterialListRequest } = { inputParameters };
+    const result = await GetMaterialListService.client.executeAsync<{ inputParameters: GetMaterialListRequest }, GetMaterialListResponse>(
       {
         connectorOperation: {
           tableName: GetMaterialListService.dataSourceName,
           operationName: 'GetMaterialList',
+          parameters: params
         },
       });
     return result;
