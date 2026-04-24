@@ -1,7 +1,12 @@
-import { GetTechListService, Office365UsersService } from "@/generated"
+import { Office365UsersService } from "@/generated"
+import type { GetTechListResponse } from "@/generated/models/GetTechListModel"
 import type { User } from "@/generated/models/Office365UsersModel"
+import { getClient, type IOperationResult } from "@microsoft/power-apps/data"
+import { dataSourcesInfo } from "../../../.power/schemas/appschemas/dataSourcesInfo"
 
 import type { Technician } from "./types"
+
+const technicianClient = getClient(dataSourcesInfo)
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
@@ -147,7 +152,16 @@ function selectOfficeUser(users: User[], technicianName: string) {
 }
 
 export async function fetchTechnicians() {
-  const result = await GetTechListService.GetTechList({})
+  const result = await technicianClient.executeAsync<
+    { inputParameters: Record<string, never> },
+    GetTechListResponse
+  >({
+    connectorOperation: {
+      tableName: "gettechlist",
+      operationName: "GetTechList",
+      parameters: { inputParameters: {} },
+    },
+  }) as IOperationResult<GetTechListResponse>
 
   if (!result.success) {
     throw result.error ?? new Error("Unable to load technicians.")

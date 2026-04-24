@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { RotateCcw } from "lucide-react"
 import spaarLogo from "@/assets/spaar-logo.png?inline"
@@ -7,6 +7,7 @@ import { fetchMaterials } from "@/lib/material-checkout/materials"
 import { saveMaterialRequest } from "@/lib/material-checkout/submissions"
 import { fetchTechnicianEmail, fetchTechnicians } from "@/lib/material-checkout/technicians"
 import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type MaterialSubmissionReceipt, type Technician } from "@/lib/material-checkout/types"
+import { cn } from "@/lib/utils"
 import { RequestSummary } from "./request-summary"
 import { RequestBuilder } from "./request-builder"
 import { SubmissionSuccessDialog } from "./submission-success-dialog"
@@ -18,6 +19,14 @@ function formatSubmissionDate(date: Date) {
 }
 
 export function MaterialCheckoutScreen() {
+  const [viewportWidth, setViewportWidth] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth : 1280
+  )
+  const [isPortraitViewport, setIsPortraitViewport] = useState(() =>
+    typeof window !== "undefined"
+      ? window.innerHeight >= window.innerWidth
+      : false
+  )
   const [selectedTechnician, setSelectedTechnician] = useState<Technician | null>(null)
   const [requestLines, setRequestLines] = useState<MaterialRequestLine[]>([])
   const [notes, setNotes] = useState("")
@@ -40,6 +49,31 @@ export function MaterialCheckoutScreen() {
   const submitMutation = useMutation({
     mutationFn: saveMaterialRequest,
   })
+  const usesSplitLayout = !isPortraitViewport && viewportWidth >= 1024
+  const usesCollapsibleSummary = isPortraitViewport && viewportWidth < 900
+  const summaryDefaultExpanded = !usesCollapsibleSummary
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return
+    }
+
+    const portraitQuery = window.matchMedia("(orientation: portrait)")
+
+    function syncViewportState() {
+      setViewportWidth(window.innerWidth)
+      setIsPortraitViewport(window.innerHeight >= window.innerWidth || portraitQuery.matches)
+    }
+
+    syncViewportState()
+    window.addEventListener("resize", syncViewportState)
+    portraitQuery.addEventListener("change", syncViewportState)
+
+    return () => {
+      window.removeEventListener("resize", syncViewportState)
+      portraitQuery.removeEventListener("change", syncViewportState)
+    }
+  }, [])
 
   function handleAddMaterial(material: MaterialRecord, quantity: number) {
     setRequestLines((currentLines) => {
@@ -125,7 +159,11 @@ export function MaterialCheckoutScreen() {
 
   return (
     <>
-      <div className="min-h-full bg-[linear-gradient(180deg,_#f6f7f9_0%,_#eef1f5_100%)] px-3 py-4 sm:px-4 sm:py-5 lg:px-6">
+      <div
+        className={cn(
+          "min-h-full bg-[linear-gradient(180deg,_#f6f7f9_0%,_#eef1f5_100%)] px-3 py-4 pb-5 sm:px-4 sm:py-5 lg:px-6"
+        )}
+      >
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
           <Card className="bg-card border shadow-sm">
             <CardContent className="flex items-center justify-between gap-3 px-4 py-1 sm:px-5">
@@ -155,7 +193,7 @@ export function MaterialCheckoutScreen() {
             </CardContent>
           </Card>
 
-          <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className={cn("grid gap-4", usesSplitLayout && "lg:grid-cols-[1.15fr_0.85fr]")}>
             <div className="grid gap-4">
               <RequestBuilder
                 technicians={techniciansQuery.data ?? []}
@@ -174,6 +212,7 @@ export function MaterialCheckoutScreen() {
             </div>
 
             <RequestSummary
+              key={usesCollapsibleSummary ? "collapsible-summary" : "expanded-summary"}
               selectedTechnician={selectedTechnician}
               technicianEmail={technicianEmailQuery.data ?? null}
               isLoadingTechnicianEmail={technicianEmailQuery.isLoading}
@@ -181,6 +220,8 @@ export function MaterialCheckoutScreen() {
               isSubmitting={submitMutation.isPending}
               lines={requestLines}
               notes={notes}
+              collapsible={usesCollapsibleSummary}
+              defaultExpanded={summaryDefaultExpanded}
               onAdjustQuantity={handleAdjustQuantity}
               onRemoveLine={handleRemoveLine}
               onSubmit={handleSubmit}
