@@ -105,9 +105,7 @@ export function RequestSummary({
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-[rgb(74,50,31)]">{line.name}</p>
                   <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2 text-xs">
-                    <span>{line.productCode}</span>
-                    <span>•</span>
-                    <span>{line.unit}</span>
+                    <span>{line.unit || "Unit not provided"}</span>
                   </div>
                 </div>
 

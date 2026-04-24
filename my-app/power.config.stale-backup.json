@@ -1,16 +1,16 @@
 {
   "version": "1.0",
-  "appId": "cf843400-c609-47fc-a097-de54c35f2ca0",
-  "appDisplayName": "Material Request",
+  "appId": "782e9d3e-de74-4dd9-be08-4012082c6030",
+  "appDisplayName": "Material Checkout",
   "region": "prod",
   "environmentId": "Default-2aab162a-8795-408d-a78c-935636f18951",
-  "description": " ",
+  "description": "",
   "buildPath": "./dist",
   "buildEntryPoint": "index.html",
   "localAppUrl": "http://localhost:3000",
   "logoPath": "Default",
   "connectionReferences": {
-    "fe9f0bdf-4a9d-4f9d-b488-aea1490c812e": {
+    "7859dccc-11c3-4f17-bd9f-50154e85fe99": {
       "id": "/providers/Microsoft.PowerApps/apis/shared_office365users",
       "displayName": "Office 365 Users",
       "dataSources": [
@@ -18,7 +18,7 @@
       ],
       "dataSets": {}
     },
-    "cf47c558-3783-4512-baa7-3e0f5fdacfde": {
+    "fde4e2e0-0fd3-4be6-9615-6ee3a4ce75a1": {
       "id": "/providers/Microsoft.PowerApps/apis/shared_sql",
       "displayName": "SQL Server",
       "dataSources": [

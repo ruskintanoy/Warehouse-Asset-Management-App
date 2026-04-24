@@ -1,97 +1,34 @@
-import { GetMaterialListService } from "@/generated"
-
+import { Spaar_materiallistsService } from "@/generated"
+import type { Spaar_materiallists } from "@/generated/models/Spaar_materiallistsModel"
 import type { MaterialRecord } from "./types"
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
-}
+function toMaterialRecord(material: Spaar_materiallists): MaterialRecord | null {
+  const id = material.spaar_materiallistid?.trim()
+  const name = material.spaar_materialname?.trim()
 
-function toNumber(value: unknown) {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value
-  }
-
-  if (typeof value === "string" && value.trim()) {
-    const parsedValue = Number(value)
-    return Number.isFinite(parsedValue) ? parsedValue : null
-  }
-
-  return null
-}
-
-function toText(value: unknown) {
-  return typeof value === "string" ? value.trim() : ""
-}
-
-function getResultSetRows(resultSets: unknown): unknown[] {
-  if (Array.isArray(resultSets)) {
-    return resultSets
-  }
-
-  if (!isRecord(resultSets)) {
-    return []
-  }
-
-  const directArrayKeys = ["Table1", "table1", "Table", "table", "ResultSet1", "resultset", "resultsets"]
-
-  for (const key of directArrayKeys) {
-    const candidate = resultSets[key]
-
-    if (Array.isArray(candidate)) {
-      return candidate
-    }
-  }
-
-  for (const value of Object.values(resultSets)) {
-    if (Array.isArray(value)) {
-      return value
-    }
-
-    if (!isRecord(value)) {
-      continue
-    }
-
-    for (const nestedValue of Object.values(value)) {
-      if (Array.isArray(nestedValue)) {
-        return nestedValue
-      }
-    }
-  }
-
-  return []
-}
-
-function toMaterialRecord(row: unknown): MaterialRecord | null {
-  if (!isRecord(row)) {
-    return null
-  }
-
-  const id = toNumber(row.id ?? row.Id ?? row.materialid ?? row.material_id)
-  const name = toText(row.name ?? row.Name)
-
-  if (id === null || !name) {
+  if (!id || !name) {
     return null
   }
 
   return {
     id,
+    materialId: material.spaar_materialid?.trim() || id,
     name,
-    unit: toText(row.unit ?? row.Unit),
-    productCode: toText(row.product_code ?? row.productCode ?? row.ProductCode ?? row.Product_Code),
+    unit: material.spaar_unit?.trim() || "",
   }
 }
 
 export async function fetchMaterials() {
-  const result = await GetMaterialListService.GetMaterialList()
+  const result = await Spaar_materiallistsService.getAll({
+    orderBy: ["spaar_materialname asc"],
+    filter: "statecode eq 0",
+  })
 
   if (!result.success) {
     throw result.error ?? new Error("Unable to load materials.")
   }
 
-  const payload = result.data as Record<string, unknown> | undefined
-  const rows = getResultSetRows(payload?.ResultSets ?? payload?.resultsets)
-
-  return rows
+  return result.data
     .map(toMaterialRecord)
     .filter((material): material is MaterialRecord => material !== null)
     .sort((left, right) => left.name.localeCompare(right.name))

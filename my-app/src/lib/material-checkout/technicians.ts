@@ -147,7 +147,7 @@ function selectOfficeUser(users: User[], technicianName: string) {
 }
 
 export async function fetchTechnicians() {
-  const result = await GetTechListService.GetTechList()
+  const result = await GetTechListService.GetTechList({})
 
   if (!result.success) {
     throw result.error ?? new Error("Unable to load technicians.")

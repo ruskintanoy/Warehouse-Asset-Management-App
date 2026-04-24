@@ -50,7 +50,7 @@ export function RequestBuilder({
   const normalizedMaterialSearch = deferredMaterialSearch.trim().toLowerCase()
   const matchingMaterials = normalizedMaterialSearch
     ? materials.filter((material) =>
-        `${material.name} ${material.productCode} ${material.unit}`.toLowerCase().includes(normalizedMaterialSearch)
+        `${material.name} ${material.unit}`.toLowerCase().includes(normalizedMaterialSearch)
       )
     : materials
   const visibleMaterials = matchingMaterials.slice(0, normalizedMaterialSearch ? 100 : 75)
@@ -217,7 +217,7 @@ export function RequestBuilder({
                       autoFocus
                       value={materialSearch}
                       onChange={(event) => setMaterialSearch(event.target.value)}
-                      placeholder="Search material name, product code, or unit..."
+                      placeholder="Search material name or unit..."
                     />
                   </div>
                   <div className="max-h-72 overflow-y-auto p-1">
@@ -255,7 +255,7 @@ export function RequestBuilder({
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-medium">{material.name}</p>
                                 <p className="text-muted-foreground truncate text-xs">
-                                  {material.productCode} • {material.unit}
+                                  {material.unit || "Unit not provided"}
                                 </p>
                               </div>
                             </button>
@@ -306,7 +306,7 @@ export function RequestBuilder({
                         {material.name}
                       </p>
                       <p className="text-muted-foreground truncate text-xs">
-                        {material.productCode} • {material.unit}
+                        {material.unit || "Unit not provided"}
                       </p>
                     </div>
 

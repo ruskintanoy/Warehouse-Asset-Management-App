@@ -87,7 +87,7 @@ export function SubmissionSuccessDialog({
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-950">{line.name}</p>
                     <p className="text-sm text-slate-600">
-                      {line.productCode} • {line.unit}
+                      {line.unit || "Unit not provided"}
                     </p>
                   </div>
                   <p className="shrink-0 text-sm font-semibold text-slate-800">

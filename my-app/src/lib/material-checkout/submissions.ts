@@ -1,10 +1,8 @@
 import { Spaar_materialrequestlinesService, Spaar_materialrequestsService, } from "@/generated"
 import type { Spaar_materialrequestlinesBase } from "@/generated/models/Spaar_materialrequestlinesModel"
-import type { Spaar_materialrequestsBase, Spaar_materialrequestsspaar_status, } from "@/generated/models/Spaar_materialrequestsModel"
+import type { Spaar_materialrequestsBase } from "@/generated/models/Spaar_materialrequestsModel"
 
 import type { MaterialRequestLine, Technician } from "./types"
-
-const PENDING_STATUS: Spaar_materialrequestsspaar_status = 534470000
 
 type SaveMaterialRequestInput = {
   technician: Technician
@@ -20,7 +18,6 @@ function buildRequestRecord(input: SaveMaterialRequestInput): Omit<Spaar_materia
     spaar_technicianname: input.technician.bponum,
     spaar_technicianemail: input.technicianEmail ?? undefined,
     spaar_notes: input.notes.trim() || undefined,
-    spaar_status: PENDING_STATUS,
     statecode: 0,
     statuscode: 1,
   } as Omit<Spaar_materialrequestsBase, "spaar_materialrequestid">
@@ -31,12 +28,9 @@ function buildLineRecord(
   requestDataverseId: string,
 ): Omit<Spaar_materialrequestlinesBase, "spaar_materialrequestlineid"> {
   return {
-    spaar_materialid: String(line.id),
-    spaar_materialname: line.name,
+    "spaar_Material@odata.bind": `/spaar_materiallists(${line.id})`,
     "spaar_MaterialRequest@odata.bind": `/spaar_materialrequests(${requestDataverseId})`,
-    spaar_productcode: line.productCode || undefined,
-    spaar_quantity: String(line.quantity),
-    spaar_unit: line.unit || undefined,
+    spaar_quantity: line.quantity,
     statecode: 0,
     statuscode: 1,
   } as Omit<Spaar_materialrequestlinesBase, "spaar_materialrequestlineid">

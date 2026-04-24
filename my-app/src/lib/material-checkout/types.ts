@@ -5,10 +5,10 @@ export type Technician = {
 }
 
 export type MaterialRecord = {
-  id: number
+  id: string
+  materialId: string
   name: string
   unit: string
-  productCode: string
 }
 
 export type MaterialRequestLine = MaterialRecord & {
@@ -24,6 +24,6 @@ export type MaterialSubmissionReceipt = {
   submittedAt: string
 }
 
-export function getMaterialKey(material: Pick<MaterialRecord, "id" | "name" | "productCode">) {
-  return `${material.id}::${material.productCode}::${material.name}`
+export function getMaterialKey(material: Pick<MaterialRecord, "id" | "name">) {
+  return `${material.id}::${material.name}`
 }
