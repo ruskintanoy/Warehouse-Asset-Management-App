@@ -30,20 +30,33 @@ export function SearchableSelect<TItem>({
   renderItem,
 }: SearchableSelectProps<TItem>) {
   const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
 
   const selectedItem = items.find((item) => getKey(item) === selectedKey)
+
+  function ensurePickerVisible() {
+    if (!containerRef.current) {
+      return
+    }
+
+    containerRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" })
+
+    window.setTimeout(() => {
+      containerRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    }, 150)
+  }
 
   useEffect(() => {
     if (!open || !panelRef.current) {
       return
     }
 
-    panelRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    ensurePickerVisible()
   }, [open])
 
   return (
-    <div className="space-y-2">
+    <div ref={containerRef} className="space-y-2">
       <Button
         type="button"
         variant="outline"
@@ -72,7 +85,11 @@ export function SearchableSelect<TItem>({
       {open && (
         <div ref={panelRef} className="rounded-md border bg-popover shadow-sm">
         <Command>
-          <CommandInput autoFocus placeholder={searchPlaceholder} />
+          <CommandInput
+            autoFocus
+            placeholder={searchPlaceholder}
+            onFocus={ensurePickerVisible}
+          />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>

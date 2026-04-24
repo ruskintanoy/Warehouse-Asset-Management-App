@@ -8,6 +8,8 @@ import { saveMaterialRequest } from "@/lib/material-checkout/submissions"
 import { fetchTechnicianEmail, fetchTechnicians } from "@/lib/material-checkout/technicians"
 import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type MaterialSubmissionReceipt, type Technician } from "@/lib/material-checkout/types"
 import { cn } from "@/lib/utils"
+import { RequestReviewDialog } from "./request-review-dialog"
+import { ReviewRequestStrip } from "./review-request-strip"
 import { RequestSummary } from "./request-summary"
 import { RequestBuilder } from "./request-builder"
 import { SubmissionSuccessDialog } from "./submission-success-dialog"
@@ -32,6 +34,7 @@ export function MaterialCheckoutScreen() {
   const [notes, setNotes] = useState("")
   const [receipt, setReceipt] = useState<MaterialSubmissionReceipt | null>(null)
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
+  const [isReviewOpen, setIsReviewOpen] = useState(false)
   const [resetVersion, setResetVersion] = useState(0)
   const techniciansQuery = useQuery({
     queryKey: ["technicians"],
@@ -50,8 +53,7 @@ export function MaterialCheckoutScreen() {
     mutationFn: saveMaterialRequest,
   })
   const usesSplitLayout = !isPortraitViewport && viewportWidth >= 1024
-  const usesCollapsibleSummary = isPortraitViewport && viewportWidth < 900
-  const summaryDefaultExpanded = !usesCollapsibleSummary
+  const usesReviewStrip = isPortraitViewport
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -139,6 +141,7 @@ export function MaterialCheckoutScreen() {
         notes: submissionNotes,
         submittedAt: submissionDate,
       })
+      setIsReviewOpen(false)
       setIsSuccessOpen(true)
       setSelectedTechnician(null)
       setRequestLines([])
@@ -153,6 +156,7 @@ export function MaterialCheckoutScreen() {
     setRequestLines([])
     setNotes("")
     setReceipt(null)
+    setIsReviewOpen(false)
     setIsSuccessOpen(false)
     setResetVersion((currentVersion) => currentVersion + 1)
   }
@@ -193,6 +197,16 @@ export function MaterialCheckoutScreen() {
             </CardContent>
           </Card>
 
+          {usesReviewStrip ? (
+            <ReviewRequestStrip
+              selectedTechnician={selectedTechnician}
+              lineCount={requestLines.length}
+              hasNotes={Boolean(notes.trim())}
+              disabled={!selectedTechnician && requestLines.length === 0 && !notes.trim()}
+              onReview={() => setIsReviewOpen(true)}
+            />
+          ) : null}
+
           <div className={cn("grid gap-4", usesSplitLayout && "lg:grid-cols-[1.15fr_0.85fr]")}>
             <div className="grid gap-4">
               <RequestBuilder
@@ -211,24 +225,38 @@ export function MaterialCheckoutScreen() {
               />
             </div>
 
-            <RequestSummary
-              key={usesCollapsibleSummary ? "collapsible-summary" : "expanded-summary"}
-              selectedTechnician={selectedTechnician}
-              technicianEmail={technicianEmailQuery.data ?? null}
-              isLoadingTechnicianEmail={technicianEmailQuery.isLoading}
-              submitError={submitMutation.isError ? "Unable to submit the material request. Please try again." : null}
-              isSubmitting={submitMutation.isPending}
-              lines={requestLines}
-              notes={notes}
-              collapsible={usesCollapsibleSummary}
-              defaultExpanded={summaryDefaultExpanded}
-              onAdjustQuantity={handleAdjustQuantity}
-              onRemoveLine={handleRemoveLine}
-              onSubmit={handleSubmit}
-            />
+            {!usesReviewStrip ? (
+              <RequestSummary
+                selectedTechnician={selectedTechnician}
+                technicianEmail={technicianEmailQuery.data ?? null}
+                isLoadingTechnicianEmail={technicianEmailQuery.isLoading}
+                submitError={submitMutation.isError ? "Unable to submit the material request. Please try again." : null}
+                isSubmitting={submitMutation.isPending}
+                lines={requestLines}
+                notes={notes}
+                onAdjustQuantity={handleAdjustQuantity}
+                onRemoveLine={handleRemoveLine}
+                onSubmit={handleSubmit}
+              />
+            ) : null}
           </div>
         </div>
       </div>
+
+      <RequestReviewDialog
+        open={usesReviewStrip && isReviewOpen}
+        selectedTechnician={selectedTechnician}
+        technicianEmail={technicianEmailQuery.data ?? null}
+        isLoadingTechnicianEmail={technicianEmailQuery.isLoading}
+        submitError={submitMutation.isError ? "Unable to submit the material request. Please try again." : null}
+        isSubmitting={submitMutation.isPending}
+        lines={requestLines}
+        notes={notes}
+        onAdjustQuantity={handleAdjustQuantity}
+        onRemoveLine={handleRemoveLine}
+        onSubmit={handleSubmit}
+        onOpenChange={setIsReviewOpen}
+      />
 
       <SubmissionSuccessDialog
         open={isSuccessOpen}
