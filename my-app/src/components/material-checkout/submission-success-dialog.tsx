@@ -1,5 +1,6 @@
 import { CheckCircle2, Mail, Truck, UserRound } from "lucide-react"
-import { Dialog,DialogContent, DialogDescription, DialogHeader, DialogTitle, } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Dialog,DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "@/components/ui/dialog"
 import { getMaterialKey, type MaterialSubmissionReceipt } from "@/lib/material-checkout/types"
 
 type SubmissionSuccessDialogProps = {
@@ -19,10 +20,10 @@ export function SubmissionSuccessDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
-        <DialogHeader className="gap-3 text-left">
-          <div className="mx-auto flex size-18 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 shadow-inner shadow-emerald-500/15 animate-in fade-in zoom-in-75 duration-300">
-            <CheckCircle2 className="size-9 animate-in zoom-in-50 duration-500" />
+      <DialogContent className="max-h-[85vh] overflow-y-auto gap-3 sm:max-w-xl">
+        <DialogHeader className="gap-2 text-left">
+          <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 shadow-inner shadow-emerald-500/15 animate-in fade-in zoom-in-75 duration-300">
+            <CheckCircle2 className="size-8 animate-in zoom-in-50 duration-500" />
           </div>
           <div className="space-y-1">
             <DialogTitle>Material request submitted</DialogTitle>
@@ -33,7 +34,7 @@ export function SubmissionSuccessDialog({
         </DialogHeader>
 
         <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_124px]">
+          <div className="grid gap-3 border-b border-slate-200 pb-3 sm:grid-cols-[minmax(0,1fr)_132px]">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
                 Technician
@@ -53,11 +54,11 @@ export function SubmissionSuccessDialog({
                     </div>
                   </div>
 
-                  <div className="flex min-w-0 items-start gap-3 pt-0.5">
+                  <div className="flex min-w-0 items-center gap-3 pt-0.5">
                     <div className="flex size-10 shrink-0 items-center justify-center rounded-full border bg-white text-slate-600 shadow-sm">
                       <Mail className="size-4.5" />
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 self-center">
                       <p className="truncate text-sm font-semibold leading-none text-slate-950">
                         {receipt.technicianEmail || "Email not found"}
                       </p>
@@ -82,11 +83,11 @@ export function SubmissionSuccessDialog({
               {receipt.lines.map((line) => (
                 <div
                   key={getMaterialKey(line)}
-                  className="flex items-start justify-between gap-3 rounded-xl border border-white bg-white px-3 py-2.5 shadow-sm"
+                  className="flex items-start justify-between gap-3 rounded-lg border border-white bg-white px-3 py-2 shadow-sm"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-950">{line.name}</p>
-                    <p className="text-sm text-slate-600">
+                    <p className="mt-0.5 text-sm text-slate-600">
                       {line.unit || "Unit not provided"}
                     </p>
                   </div>
@@ -102,11 +103,24 @@ export function SubmissionSuccessDialog({
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
               Notes
             </p>
-            <p className="mt-2 text-sm text-slate-700 font-semibold">
+            <p className="mt-1.5 text-sm font-semibold text-slate-700">
               {receipt.notes.trim() ? receipt.notes : "No notes were included with this request."}
+            </p>
+            <p className="mt-2 text-sm text-slate-600">
+              For corrections or additional details, please contact Pawel Jablonowski at pawel@spaar.ca.
             </p>
           </div>
         </div>
+
+        <DialogFooter className="pt-1">
+          <Button
+            type="button"
+            className="h-10 sm:min-w-44"
+            onClick={() => onOpenChange(false)}
+          >
+            Start New Request
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
