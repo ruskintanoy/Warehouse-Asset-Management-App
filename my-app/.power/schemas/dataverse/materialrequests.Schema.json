@@ -225,13 +225,16 @@
           "x-ms-schema-name": "spaar_Status",
           "enum": [
             "Approve",
-            "Reject"
+            "Reject",
+            "Pending"
           ],
           "x-ms-enum-values": [
             900850000,
-            900850001
+            900850001,
+            534470001
           ],
           "Color": [
+            null,
             null,
             null
           ],

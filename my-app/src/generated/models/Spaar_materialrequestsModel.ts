@@ -4,7 +4,8 @@
  */
 export const Spaar_materialrequestsspaar_status = {
   900850000: 'Approve',
-  900850001: 'Reject'
+  900850001: 'Reject',
+  534470001: 'Pending'
 } as const;
 export type Spaar_materialrequestsspaar_status = keyof typeof Spaar_materialrequestsspaar_status;
 export const Spaar_materialrequestsstatecode = {
