@@ -179,10 +179,10 @@ export function MaterialCheckoutScreen() {
                 />
                 <div>
                   <h1 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
-                    Material Checkout
+                    Material Request
                   </h1>
                   <p className="text-muted-foreground text-sm">
-                    Warehouse kiosk request form
+                    Warehouse material request form
                   </p>
                 </div>
               </div>

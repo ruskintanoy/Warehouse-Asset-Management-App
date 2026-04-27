@@ -24,7 +24,7 @@ export function ReviewRequestStrip({
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Current Request
+              Request Summary
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-700">
               <span className="inline-flex items-center gap-1.5">
