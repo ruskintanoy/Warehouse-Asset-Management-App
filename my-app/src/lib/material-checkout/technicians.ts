@@ -8,6 +8,22 @@ import type { Technician } from "./types"
 
 const technicianClient = getClient(dataSourcesInfo)
 
+function resolveGetTechListDataSourceName() {
+  const connectorEntries = Object.entries(dataSourcesInfo).filter(([, value]) =>
+    value.dataSourceType === "Connector"
+    && value.apis
+    && "GetTechList" in value.apis
+  )
+
+  const singleOperationEntry = connectorEntries.find(([, value]) =>
+    Object.keys(value.apis ?? {}).length === 1
+  )
+
+  return singleOperationEntry?.[0] ?? connectorEntries[0]?.[0] ?? null
+}
+
+const getTechListDataSourceName = resolveGetTechListDataSourceName()
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
@@ -152,12 +168,16 @@ function selectOfficeUser(users: User[], technicianName: string) {
 }
 
 export async function fetchTechnicians() {
+  if (!getTechListDataSourceName) {
+    throw new Error("Unable to find the GetTechList data source.")
+  }
+
   const result = await technicianClient.executeAsync<
     { inputParameters: Record<string, never> },
     GetTechListResponse
   >({
     connectorOperation: {
-      tableName: "gettechlist",
+      tableName: getTechListDataSourceName,
       operationName: "GetTechList",
       parameters: { inputParameters: {} },
     },

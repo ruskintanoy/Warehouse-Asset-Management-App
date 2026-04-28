@@ -46,21 +46,31 @@ export async function saveMaterialRequest(input: SaveMaterialRequestInput): Prom
   }
 
   const requestDataverseId = requestCreateResult.data.spaar_materialrequestid
+  const createdLineIds: string[] = []
 
-  const lineResults = await Promise.all(
-    input.lines.map((line) =>
-      Spaar_materialrequestlinesService.create(
+  try {
+    for (const line of input.lines) {
+      const lineCreateResult = await Spaar_materialrequestlinesService.create(
         buildLineRecord(
           line,
           requestDataverseId,
         )
       )
+
+      if (!lineCreateResult.success) {
+        throw lineCreateResult.error ?? new Error("Unable to create one or more material request lines.")
+      }
+
+      createdLineIds.push(lineCreateResult.data.spaar_materialrequestlineid)
+    }
+  } catch (error) {
+    await Promise.allSettled(
+      createdLineIds.map((lineId) => Spaar_materialrequestlinesService.delete(lineId))
     )
-  )
+    await Promise.allSettled([
+      Spaar_materialrequestsService.delete(requestDataverseId),
+    ])
 
-  const failedLineResult = lineResults.find((result) => !result.success)
-
-  if (failedLineResult) {
-    throw failedLineResult.error ?? new Error("Unable to create one or more material request lines.")
+    throw error
   }
 }

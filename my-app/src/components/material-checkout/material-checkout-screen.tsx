@@ -77,7 +77,14 @@ export function MaterialCheckoutScreen() {
     }
   }, [])
 
+  function clearSubmitError() {
+    if (submitMutation.isError) {
+      submitMutation.reset()
+    }
+  }
+
   function handleAddMaterial(material: MaterialRecord, quantity: number) {
+    clearSubmitError()
     setRequestLines((currentLines) => {
       const existingLine = currentLines.find(
         (line) => getMaterialKey(line) === getMaterialKey(material)
@@ -102,6 +109,7 @@ export function MaterialCheckoutScreen() {
   }
 
   function handleAdjustQuantity(materialKey: string, nextQuantity: number) {
+    clearSubmitError()
     setRequestLines((currentLines) =>
       currentLines.map((line) =>
         getMaterialKey(line) === materialKey ? { ...line, quantity: nextQuantity } : line
@@ -110,6 +118,7 @@ export function MaterialCheckoutScreen() {
   }
 
   function handleRemoveLine(materialKey: string) {
+    clearSubmitError()
     setRequestLines((currentLines) =>
       currentLines.filter((line) => getMaterialKey(line) !== materialKey)
     )
@@ -141,6 +150,7 @@ export function MaterialCheckoutScreen() {
         notes: submissionNotes,
         submittedAt: submissionDate,
       })
+      submitMutation.reset()
       setIsReviewOpen(false)
       setIsSuccessOpen(true)
       setSelectedTechnician(null)
@@ -152,6 +162,7 @@ export function MaterialCheckoutScreen() {
   }
 
   function handleResetPage() {
+    submitMutation.reset()
     setSelectedTechnician(null)
     setRequestLines([])
     setNotes("")
@@ -219,8 +230,14 @@ export function MaterialCheckoutScreen() {
                 technicianError={techniciansQuery.isError ? "Could not load technicians right now." : null}
                 isLoadingMaterials={materialsQuery.isLoading}
                 materialError={materialsQuery.isError ? "Could not load materials right now." : null}
-                onSelectTechnician={setSelectedTechnician}
-                onNotesChange={setNotes}
+                onSelectTechnician={(technician) => {
+                  clearSubmitError()
+                  setSelectedTechnician(technician)
+                }}
+                onNotesChange={(nextNotes) => {
+                  clearSubmitError()
+                  setNotes(nextNotes)
+                }}
                 onAddMaterials={handleAddMaterials}
               />
             </div>
