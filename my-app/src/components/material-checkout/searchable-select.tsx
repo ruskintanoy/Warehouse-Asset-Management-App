@@ -1,7 +1,8 @@
-import { type ReactNode, useEffect, useRef, useState } from "react"
+import { type ReactNode, useRef, useState } from "react"
 import { Check, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, } from "@/components/ui/command"
+import { useEnsureVisible } from "@/components/ui/use-ensure-visible"
 import { cn } from "@/lib/utils"
 
 type SearchableSelectProps<TItem> = {
@@ -31,29 +32,9 @@ export function SearchableSelect<TItem>({
 }: SearchableSelectProps<TItem>) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const panelRef = useRef<HTMLDivElement | null>(null)
 
   const selectedItem = items.find((item) => getKey(item) === selectedKey)
-
-  function ensurePickerVisible() {
-    if (!containerRef.current) {
-      return
-    }
-
-    containerRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" })
-
-    window.setTimeout(() => {
-      containerRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
-    }, 150)
-  }
-
-  useEffect(() => {
-    if (!open || !panelRef.current) {
-      return
-    }
-
-    ensurePickerVisible()
-  }, [open])
+  const ensurePickerVisible = useEnsureVisible(containerRef, open)
 
   return (
     <div ref={containerRef} className="space-y-2">
@@ -83,7 +64,7 @@ export function SearchableSelect<TItem>({
       </Button>
 
       {open && (
-        <div ref={panelRef} className="rounded-md border bg-popover shadow-sm">
+        <div className="rounded-md border bg-popover shadow-sm">
         <Command>
           <CommandInput
             autoFocus

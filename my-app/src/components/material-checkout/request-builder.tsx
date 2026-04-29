@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { LoadingIndicator } from "@/components/ui/loading-indicator"
+import { useEnsureVisible } from "@/components/ui/use-ensure-visible"
 import { getMaterialKey, type MaterialRecord, type MaterialRequestLine, type Technician } from "@/lib/material-checkout/types"
 import { cn } from "@/lib/utils"
 
@@ -44,8 +45,10 @@ export function RequestBuilder({
   const [isMaterialPickerOpen, setIsMaterialPickerOpen] = useState(false)
   const [draftMaterials, setDraftMaterials] = useState<MaterialRequestLine[]>([])
   const [materialSearch, setMaterialSearch] = useState("")
-  const materialPanelRef = useRef<HTMLDivElement | null>(null)
+  const materialPickerRef = useRef<HTMLDivElement | null>(null)
+  const materialSearchInputRef = useRef<HTMLInputElement | null>(null)
   const deferredMaterialSearch = useDeferredValue(materialSearch)
+  const ensureMaterialPickerVisible = useEnsureVisible(materialPickerRef, isMaterialPickerOpen)
 
   const normalizedMaterialSearch = deferredMaterialSearch.trim().toLowerCase()
   const matchingMaterials = normalizedMaterialSearch
@@ -62,14 +65,6 @@ export function RequestBuilder({
     setMaterialSearch("")
   }, [resetVersion])
 
-  useEffect(() => {
-    if (!isMaterialPickerOpen || !materialPanelRef.current) {
-      return
-    }
-
-    materialPanelRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" })
-  }, [isMaterialPickerOpen])
-
   function handleToggleMaterial(material: MaterialRecord) {
     setDraftMaterials((currentDrafts) => {
       const materialKey = getMaterialKey(material)
@@ -81,6 +76,11 @@ export function RequestBuilder({
 
       return [...currentDrafts, { ...material, quantity: 1 }]
     })
+
+    window.setTimeout(() => {
+      materialSearchInputRef.current?.focus()
+      ensureMaterialPickerVisible()
+    }, 0)
   }
 
   function handleAdjustDraftQuantity(materialKey: string, nextQuantity: number) {
@@ -183,7 +183,7 @@ export function RequestBuilder({
                 <RotateCcw className="size-4" />
               </Button>
             </div>
-            <div className="space-y-2">
+            <div ref={materialPickerRef} className="space-y-2">
               <Button
                 id="material-search"
                 type="button"
@@ -211,12 +211,14 @@ export function RequestBuilder({
               </Button>
 
               {isMaterialPickerOpen && (
-                <div ref={materialPanelRef} className="rounded-md border bg-popover shadow-sm">
+                <div className="rounded-md border bg-popover shadow-sm">
                   <div className="border-b p-2">
                     <Input
+                      ref={materialSearchInputRef}
                       autoFocus
                       value={materialSearch}
                       onChange={(event) => setMaterialSearch(event.target.value)}
+                      onFocus={ensureMaterialPickerVisible}
                       placeholder="Search material name or unit..."
                     />
                   </div>
@@ -238,8 +240,6 @@ export function RequestBuilder({
                               type="button"
                               onClick={() => {
                                 handleToggleMaterial(material)
-                                setIsMaterialPickerOpen(false)
-                                setMaterialSearch("")
                               }}
                               className={cn(
                                 "flex w-full items-start gap-3 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground",
